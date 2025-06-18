@@ -15,8 +15,9 @@ export default function PloFormModal({ onSuccess, onClose }) {
       try {
         const aktif = await apiService.get("/kurikulum/active");
         const res = await apiService.get(
-          `/profillulusan/by-kurikulum/${aktif.kurikulum_id}`
+          `/profillulusan/by-kurikulum?id=${aktif.kurikulum_id}`
         );
+
         setProfilList(res);
       } catch (err) {
         console.error("Gagal mengambil data profil lulusan:", err);
@@ -36,6 +37,13 @@ export default function PloFormModal({ onSuccess, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validasi: minimal satu profil lulusan harus dipilih
+    if (selectedProfilIds.length === 0) {
+      alert("Harap pilih minimal satu Profil Lulusan sebagai pemetaan.");
+      return;
+    }
+
     setLoading(true); // Mulai loading
     try {
       await apiService.post("/plo/create", {
@@ -69,7 +77,7 @@ export default function PloFormModal({ onSuccess, onClose }) {
             type="text"
             value={kode}
             onChange={(e) => setKode(e.target.value)}
-            placeholder="Misal: PLO1"
+            placeholder="Misal: 1"
             required
             className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />

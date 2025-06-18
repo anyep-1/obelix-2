@@ -60,14 +60,14 @@ export async function POST(req) {
       { expiresIn: "1d" }
     );
 
-    cookies().set("token", token, {
+    const cookieStore = await cookies();
+    cookieStore.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
+      maxAge: 60 * 60 * 24,
     });
-
-    console.log("LOGIN ATTEMPT:", { username, password, role });
 
     return NextResponse.json(
       {

@@ -25,7 +25,11 @@ const ToolsAssessmentPage = () => {
   }, []);
 
   if (loading) {
-    return <p className="p-6">Memuat data user...</p>;
+    return (
+      <div className="p-6 min-h-screen flex justify-center items-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return (

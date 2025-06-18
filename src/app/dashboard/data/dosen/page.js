@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DataDosenKelas from "@/components/Plan/DataDosenKelas";
 import apiService from "@/app/services/apiServices";
+import LoadingSpinner from "@/components/all/LoadingSpinner";
 
 export default function Page() {
   const [role, setRole] = useState("");
@@ -24,7 +25,11 @@ export default function Page() {
   }, []);
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    return (
+      <div className="p-6 min-h-screen flex justify-center items-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return <DataDosenKelas role={role} />;

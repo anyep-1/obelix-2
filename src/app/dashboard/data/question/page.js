@@ -15,7 +15,12 @@ const QuestionPage = () => {
     });
   }, []);
 
-  if (loading) return <p className="p-6">Memuat data user...</p>;
+  if (loading)
+    return (
+      <div className="p-6 min-h-screen flex justify-center items-center">
+        <LoadingSpinner />
+      </div>
+    );
 
   return (
     <div className="p-6">

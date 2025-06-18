@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 export async function POST() {
   try {
     // 🔥 Hapus token dari cookie
-    cookies().set("token", "", {
+    const cookieStore = await cookies();
+    cookieStore().set("token", "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

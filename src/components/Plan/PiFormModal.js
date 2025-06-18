@@ -15,7 +15,7 @@ export default function PiFormModal({ onSuccess, onClose }) {
       try {
         const aktif = await apiService.get("/kurikulum/active");
         const res = await apiService.get(
-          `/plo/by-kurikulum/${aktif.kurikulum_id}`
+          `/plo/by-kurikulum?id=${aktif.kurikulum_id}`
         );
         setPloList(res);
         if (res.length > 0) setSelectedPloId(res[0].plo_id);
