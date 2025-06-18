@@ -18,7 +18,8 @@ export default function PiFormModal({ onSuccess, onClose }) {
           `/plo/by-kurikulum?id=${aktif.kurikulum_id}`
         );
         setPloList(res);
-        if (res.length > 0) setSelectedPloId(res[0].plo_id);
+        // Jangan set selectedPloId otomatis, biarkan null agar muncul placeholder
+        // if (res.length > 0) setSelectedPloId(res[0].plo_id);
       } catch (err) {
         console.error("Gagal ambil data PLO:", err);
       }
@@ -28,6 +29,10 @@ export default function PiFormModal({ onSuccess, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedPloId) {
+      alert("Silakan pilih PLO terlebih dahulu");
+      return;
+    }
     setLoading(true);
     try {
       await apiService.post("/pi/create", {
@@ -99,6 +104,7 @@ export default function PiFormModal({ onSuccess, onClose }) {
             type="button"
             onClick={onClose}
             className="px-4 py-2 border border-gray-400 text-gray-700 rounded hover:bg-gray-100"
+            disabled={loading}
           >
             Batal
           </button>

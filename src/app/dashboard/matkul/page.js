@@ -62,7 +62,11 @@ export default function MatkulPage() {
     <div className="px-6 pt-6">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-gray-800">Mata Kuliah</h1>
-        {role === "Kaprodi" && <ButtonAdd onClick={() => setShowModal(true)} />}
+        {role === "Kaprodi" && (
+          <div className="relative z-20">
+            <ButtonAdd onClick={() => setShowModal(true)} />
+          </div>
+        )}
       </div>
 
       <hr className="border-t border-gray-300 mb-4" />

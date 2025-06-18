@@ -3,45 +3,52 @@
 import { useEffect, useState } from "react";
 import apiService from "@/app/services/apiServices";
 
-export default function CloFormModal({ onClose, onSuccess }) {
+export default function CloFormModal({ onClose, onSuccess, kurikulumId }) {
   const [form, setForm] = useState({
     nama_clo: "",
     nomor_clo: "",
-    matkul_id: "",
+    matkul_id: "", // bebas pilih di modal
     pi_id: "",
     plo_id: "",
   });
 
   const [matkulList, setMatkulList] = useState([]);
-  const [piList, setPiList] = useState([]);
   const [ploList, setPloList] = useState([]);
+  const [piList, setPiList] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const aktif = await apiService.get("/kurikulum/active");
+    if (!kurikulumId) return;
 
-      const [matkul, plo] = await Promise.all([
-        apiService.get(`/matkul/by-kurikulum?id=${aktif.kurikulum_id}`),
-        apiService.get(`/plo/by-kurikulum?id=${aktif.kurikulum_id}`),
-      ]);
+    async function load() {
+      try {
+        const [matkul, plo] = await Promise.all([
+          apiService.get(`/matkul/by-kurikulum?id=${kurikulumId}`),
+          apiService.get(`/plo/by-kurikulum?id=${kurikulumId}`),
+        ]);
+        setMatkulList(matkul);
+        setPloList(plo);
+      } catch (error) {
+        console.error("Gagal load matkul/plo", error);
+      }
+    }
 
-      setMatkulList(matkul);
-      setPloList(plo);
-    };
-
-    fetchData();
-  }, []);
+    load();
+  }, [kurikulumId]);
 
   const handleChange = async (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    setForm((prev) => ({ ...prev, [name]: value }));
 
     if (name === "plo_id") {
       setForm((prev) => ({ ...prev, pi_id: "" }));
       if (value) {
-        const pi = await apiService.get(`/pi/by-plo?id=${value}`);
-        setPiList(pi);
+        try {
+          const pi = await apiService.get(`/pi/by-plo?id=${value}`);
+          setPiList(pi);
+        } catch {
+          setPiList([]);
+        }
       } else {
         setPiList([]);
       }
@@ -49,18 +56,31 @@ export default function CloFormModal({ onClose, onSuccess }) {
   };
 
   const handleSubmit = async () => {
+    if (
+      !form.nomor_clo ||
+      !form.nama_clo ||
+      !form.matkul_id ||
+      !form.plo_id ||
+      !form.pi_id
+    ) {
+      alert("Semua field harus diisi");
+      return;
+    }
+
     setLoading(true);
     try {
       await apiService.post("/clo/create", {
-        ...form,
+        nomor_clo: form.nomor_clo,
+        nama_clo: form.nama_clo,
         matkul_id: parseInt(form.matkul_id),
-        pi_id: parseInt(form.pi_id),
         plo_id: parseInt(form.plo_id),
+        pi_id: parseInt(form.pi_id),
       });
       onSuccess();
       onClose();
     } catch (error) {
       console.error("Gagal simpan CLO:", error);
+      alert("Gagal menyimpan CLO");
     } finally {
       setLoading(false);
     }
@@ -72,7 +92,7 @@ export default function CloFormModal({ onClose, onSuccess }) {
         <h2 className="text-xl font-bold mb-4 text-gray-800">Tambah CLO</h2>
 
         <div className="space-y-3">
-          {/* Mata Kuliah */}
+          {/* Dropdown matkul bebas pilih */}
           <select
             name="matkul_id"
             className="w-full border border-gray-300 px-3 py-2 rounded"
@@ -87,7 +107,7 @@ export default function CloFormModal({ onClose, onSuccess }) {
             ))}
           </select>
 
-          {/* PLO */}
+          {/* Dropdown PLO */}
           <select
             name="plo_id"
             className="w-full border border-gray-300 px-3 py-2 rounded"
@@ -102,7 +122,7 @@ export default function CloFormModal({ onClose, onSuccess }) {
             ))}
           </select>
 
-          {/* PI */}
+          {/* Dropdown PI */}
           <select
             name="pi_id"
             className="w-full border border-gray-300 px-3 py-2 rounded"
@@ -117,22 +137,22 @@ export default function CloFormModal({ onClose, onSuccess }) {
             ))}
           </select>
 
-          {/* Nomor CLO */}
+          {/* Input nomor CLO */}
           <input
             name="nomor_clo"
             placeholder="Nomor CLO"
             className="w-full border border-gray-300 px-3 py-2 rounded"
-            onChange={handleChange}
             value={form.nomor_clo}
+            onChange={handleChange}
           />
 
-          {/* Nama CLO */}
+          {/* Input nama CLO */}
           <input
             name="nama_clo"
             placeholder="Nama CLO"
             className="w-full border border-gray-300 px-3 py-2 rounded"
-            onChange={handleChange}
             value={form.nama_clo}
+            onChange={handleChange}
           />
         </div>
 
@@ -140,6 +160,7 @@ export default function CloFormModal({ onClose, onSuccess }) {
           <button
             onClick={onClose}
             className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+            disabled={loading}
           >
             Batal
           </button>

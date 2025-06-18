@@ -4,18 +4,16 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
-  const kurikulumId = Number(searchParams.get("id"));
+  const matkulId = Number(searchParams.get("id")); // id adalah matkul_id
 
-  if (isNaN(kurikulumId)) {
+  if (isNaN(matkulId)) {
     return NextResponse.json({ message: "ID tidak valid" }, { status: 400 });
   }
 
   try {
     const cloList = await prisma.tb_clo.findMany({
       where: {
-        tb_matkul: {
-          kurikulum_id: kurikulumId,
-        },
+        matkul_id: matkulId, // filter berdasarkan matkul_id langsung
       },
       orderBy: {
         nomor_clo: "asc",

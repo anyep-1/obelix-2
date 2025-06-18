@@ -18,6 +18,7 @@ export default function CLOPage() {
   const [role, setRole] = useState("");
   const [editingItem, setEditingItem] = useState(null);
 
+  // Fetch kurikulum aktif dan matkul list
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -28,13 +29,6 @@ export default function CLOPage() {
           `/matkul/by-kurikulum?id=${aktif.kurikulum_id}`
         );
         setMatkulList(matkul);
-
-        if (matkul.length > 0) {
-          setSelectedMatkulId(matkul[0].matkul_id);
-        }
-
-        const user = await apiService.get("/me");
-        setRole(user?.user?.role || "");
       } catch (err) {
         console.error("Gagal mengambil data:", err);
       }
@@ -43,9 +37,32 @@ export default function CLOPage() {
     fetchData();
   }, []);
 
+  // Reset selectedMatkulId setiap kali matkulList berubah
+  useEffect(() => {
+    if (matkulList.length > 0) {
+      setSelectedMatkulId(matkulList[0].matkul_id);
+    } else {
+      setSelectedMatkulId(null);
+    }
+  }, [matkulList]);
+
+  // Ambil role user
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const user = await apiService.get("/me");
+        setRole(user?.user?.role || "");
+      } catch (err) {
+        console.error("Gagal mengambil role user:", err);
+      }
+    };
+    fetchUserRole();
+  }, []);
+
+  // Ambil daftar CLO sesuai selectedMatkulId dan refresh
   useEffect(() => {
     const fetchCLO = async () => {
-      if (!selectedMatkulId) return;
+      if (!selectedMatkulId || isNaN(selectedMatkulId)) return;
 
       setLoading(true);
       try {
@@ -107,7 +124,10 @@ export default function CLOPage() {
         <label className="block mb-1 font-medium">Pilih Mata Kuliah:</label>
         <select
           value={selectedMatkulId || ""}
-          onChange={(e) => setSelectedMatkulId(parseInt(e.target.value))}
+          onChange={(e) => {
+            const val = e.target.value === "" ? null : parseInt(e.target.value);
+            setSelectedMatkulId(val);
+          }}
           className="max-w-xl border px-3 py-2 rounded"
         >
           <option value="">-- Pilih Mata Kuliah --</option>
@@ -121,7 +141,11 @@ export default function CLOPage() {
 
       {role === "DosenKoor" && (
         <div className="mb-4">
-          <ButtonAdd onClick={() => setShowModal(true)} />
+          <ButtonAdd
+            onClick={() => {
+              setShowModal(true);
+            }}
+          />
         </div>
       )}
 
@@ -129,7 +153,10 @@ export default function CLOPage() {
         <CloFormModal
           kurikulumId={kurikulum?.kurikulum_id}
           onClose={() => setShowModal(false)}
-          onSuccess={() => setRefresh((r) => r + 1)}
+          onSuccess={() => {
+            setRefresh((r) => r + 1);
+            setShowModal(false);
+          }}
         />
       )}
 
