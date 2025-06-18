@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DataToolsAssessment from "@/components/Plan/DataToolsAssesment";
 import apiService from "@/app/services/apiServices";
+import LoadingSpinner from "@/components/all/LoadingSpinner";
 
 const ToolsAssessmentPage = () => {
   const [role, setRole] = useState("");

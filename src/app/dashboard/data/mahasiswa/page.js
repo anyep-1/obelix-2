@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import apiService from "@/app/services/apiServices";
 import DataMahasiswaKelas from "@/components/Plan/DataMahasiswaKelas";
+import LoadingSpinner from "@/components/all/LoadingSpinner";
 
 const MahasiswaPage = () => {
   const [role, setRole] = useState("");

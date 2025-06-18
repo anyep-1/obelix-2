@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DataQuestion from "@/components/Plan/DataQuestion";
 import apiService from "@/app/services/apiServices";
+import LoadingSpinner from "@/components/all/LoadingSpinner";
 
 const QuestionPage = () => {
   const [role, setRole] = useState("");
