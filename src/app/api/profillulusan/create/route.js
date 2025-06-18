@@ -1,5 +1,6 @@
 // src/app/api/profillulusan/create/route.js
 import prisma from "@/lib/prisma";
+export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   const { deskripsi } = await req.json();

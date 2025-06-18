@@ -1,6 +1,7 @@
 // src/app/api/dashboard/skor/route.js
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {

@@ -1,5 +1,6 @@
 // src/app/api/matkul/route.js
 import prisma from "@/lib/prisma";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const data = await prisma.tb_matkul.findMany({
