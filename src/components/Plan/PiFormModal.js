@@ -79,10 +79,13 @@ export default function PiFormModal({ onSuccess, onClose }) {
         <div className="mb-3">
           <label className="block text-sm font-medium mb-1">PLO Terkait</label>
           <select
-            value={selectedPloId || ""}
+            value={selectedPloId ?? ""}
             onChange={(e) => setSelectedPloId(Number(e.target.value))}
             className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
+            <option value="" disabled>
+              {ploList.length === 0 ? "Belum ada PLO" : "Pilih PLO"}
+            </option>
             {ploList.map((p) => (
               <option key={p.plo_id} value={p.plo_id}>
                 PLO {p.nomor_plo}
