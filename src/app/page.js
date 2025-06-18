@@ -30,11 +30,6 @@ export default function Home() {
     e.preventDefault();
     setMessage("");
 
-    console.log("Login payload:", {
-      username: form.username,
-      password: form.password,
-      role: isAdmin ? "Admin" : selectedRole,
-    });
     try {
       const res = await apiService.post("/login", {
         username: form.username,
