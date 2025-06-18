@@ -7,7 +7,7 @@ export async function POST() {
   try {
     // 🔥 Hapus token dari cookie
     const cookieStore = await cookies();
-    cookieStore().set("token", "", {
+    cookieStore.set("token", "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
