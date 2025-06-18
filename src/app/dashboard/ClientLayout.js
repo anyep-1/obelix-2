@@ -23,11 +23,11 @@ export default function ClientLayout({ children }) {
           setUser(res.user);
         } else {
           setUser(null);
-          router.replace("/login"); // Redirect ke login kalau gak ada user
+          router.replace("/"); // Redirect ke login kalau gak ada user
         }
       } catch (error) {
         setUser(null);
-        router.replace("/login");
+        router.replace("/");
       } finally {
         setLoading(false);
       }
