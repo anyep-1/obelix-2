@@ -11,6 +11,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  LineController,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import apiService from "@/app/services/apiServices";
@@ -24,7 +25,8 @@ ChartJS.register(
   PointElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  LineController
 );
 
 export default function Dashboard() {
