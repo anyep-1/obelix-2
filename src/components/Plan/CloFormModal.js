@@ -7,7 +7,7 @@ export default function CloFormModal({ onClose, onSuccess, kurikulumId }) {
   const [form, setForm] = useState({
     nama_clo: "",
     nomor_clo: "",
-    matkul_id: "", // bebas pilih di modal
+    matkul_id: "", // kosong awal, user harus pilih
     pi_id: "",
     plo_id: "",
   });
@@ -35,6 +35,8 @@ export default function CloFormModal({ onClose, onSuccess, kurikulumId }) {
 
     load();
   }, [kurikulumId]);
+
+  // Jangan otomatis set matkul_id di sini agar tidak auto pilih matkul pertama
 
   const handleChange = async (e) => {
     const { name, value } = e.target;
@@ -92,14 +94,16 @@ export default function CloFormModal({ onClose, onSuccess, kurikulumId }) {
         <h2 className="text-xl font-bold mb-4 text-gray-800">Tambah CLO</h2>
 
         <div className="space-y-3">
-          {/* Dropdown matkul bebas pilih */}
+          {/* Dropdown matkul dengan placeholder */}
           <select
             name="matkul_id"
             className="w-full border border-gray-300 px-3 py-2 rounded"
             value={form.matkul_id}
             onChange={handleChange}
           >
-            <option value="">Pilih Mata Kuliah</option>
+            <option value="" disabled>
+              Pilih Mata Kuliah
+            </option>
             {matkulList.map((m) => (
               <option key={m.matkul_id} value={m.matkul_id}>
                 {m.nama_matkul}
@@ -114,7 +118,9 @@ export default function CloFormModal({ onClose, onSuccess, kurikulumId }) {
             value={form.plo_id}
             onChange={handleChange}
           >
-            <option value="">Pilih PLO</option>
+            <option value="" disabled>
+              Pilih PLO
+            </option>
             {ploList.map((p) => (
               <option key={p.plo_id} value={p.plo_id}>
                 PLO {p.nomor_plo}
@@ -129,7 +135,9 @@ export default function CloFormModal({ onClose, onSuccess, kurikulumId }) {
             value={form.pi_id}
             onChange={handleChange}
           >
-            <option value="">Pilih PI</option>
+            <option value="" disabled>
+              Pilih PI
+            </option>
             {piList.map((pi) => (
               <option key={pi.pi_id} value={pi.pi_id}>
                 PI {pi.nomor_pi}

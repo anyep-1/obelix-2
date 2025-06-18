@@ -21,7 +21,7 @@ const InputTools = () => {
     }
 
     try {
-      const res = await apiService.post("/input/toolsAssessment", toolsData);
+      const res = await apiService.post("/input/toolsAssesment", toolsData);
       if (res.success || res.status === 201) {
         setSuccessMsg("Data tools berhasil disimpan.");
         setErrorMsg("");
