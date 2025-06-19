@@ -15,10 +15,15 @@ const FormInputKelasDosen = ({ onSuccess }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const kurikulum = await apiService.get("/kurikulum/active");
+
         const dosenRes = await apiService.get("/dosen/by-kurikulum");
-        const matkulRes = await apiService.get("/matkul/by-kurikulum/active");
-        setDosenList(dosenRes);
-        setMatkulList(matkulRes);
+        const matkulRes = await apiService.get(
+          `/matkul/by-kurikulum?id=${kurikulum.kurikulum_id}`
+        );
+
+        setDosenList(dosenRes.dosen || []);
+        setMatkulList(matkulRes || []);
       } catch (err) {
         console.error("Gagal mengambil data dosen/matkul:", err);
       }
