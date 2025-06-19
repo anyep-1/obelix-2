@@ -11,6 +11,12 @@ export async function DELETE(req) {
       return NextResponse.json({ error: "ID tidak valid." }, { status: 400 });
     }
 
+    // Hapus dulu semua question yang berelasi dengan clo
+    await prisma.tb_question.deleteMany({
+      where: { clo_id: id },
+    });
+
+    // Baru hapus CLO
     await prisma.tb_clo.delete({
       where: { clo_id: id },
     });
