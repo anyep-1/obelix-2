@@ -6,98 +6,76 @@ import ButtonAdd from "../all/ButtonAdd";
 import Modal from "../all/Modal";
 import FormInputMahasiswa from "./FormInputMahasiswa";
 import FormInputKelasMahasiswa from "./FormInputKelasMahasiswa";
+import Pagination from "../all/Pagination";
 
 const DataMahasiswaKelas = ({ role }) => {
   const [activeTab, setActiveTab] = useState("mahasiswa");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [mahasiswaList, setMahasiswaList] = useState([]);
-  const [kelasList, setKelasList] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [kurikulumAktif, setKurikulumAktif] = useState(null);
+
+  // State mahasiswa
+  const [mahasiswaList, setMahasiswaList] = useState([]);
+  const [mahasiswaTotalPages, setMahasiswaTotalPages] = useState(1);
+  const [mahasiswaPage, setMahasiswaPage] = useState(1);
+  const [loadingMahasiswa, setLoadingMahasiswa] = useState(false);
+
+  // State kelas
+  const [kelasList, setKelasList] = useState([]);
+  const [kelasTotalPages, setKelasTotalPages] = useState(1);
+  const [kelasPage, setKelasPage] = useState(1);
+  const [loadingKelas, setLoadingKelas] = useState(false);
+
   const itemsPerPage = 10;
 
-  const fetchKurikulumAktif = async () => {
-    try {
-      const res = await apiService.get("/kurikulum/active");
-      setKurikulumAktif(res);
-    } catch (error) {
-      console.error("Gagal ambil kurikulum aktif:", error);
-    }
-  };
-
-  const fetchMahasiswa = () => {
-    if (!kurikulumAktif) return;
-    apiService
-      .get("/mahasiswa/by-kurikulum", {
-        kurikulum_id: kurikulumAktif.kurikulum_id,
-      })
-      .then((res) => setMahasiswaList(res?.mahasiswa || []))
-      .catch((err) => console.error("Gagal fetch mahasiswa:", err));
-  };
-
-  const fetchKelas = () => {
-    if (!kurikulumAktif) return;
-    apiService
-      .get("/kelasMahasiswa/by-kurikulum", {
-        kurikulum_id: kurikulumAktif.kurikulum_id,
-      })
-      .then((res) => setKelasList(res?.kelas || []))
-      .catch((err) => console.error("Gagal fetch kelas:", err));
-  };
-
   useEffect(() => {
+    const fetchKurikulumAktif = async () => {
+      try {
+        const res = await apiService.get("/kurikulum/active");
+        setKurikulumAktif(res);
+      } catch (error) {
+        console.error("Gagal ambil kurikulum aktif:", error);
+      }
+    };
+
     fetchKurikulumAktif();
   }, []);
 
   useEffect(() => {
     if (!kurikulumAktif) return;
-    if (activeTab === "mahasiswa") fetchMahasiswa();
-    else fetchKelas();
-    setCurrentPage(1);
-  }, [activeTab, kurikulumAktif]);
+    if (activeTab === "mahasiswa") fetchMahasiswa(mahasiswaPage);
+    else fetchKelas(kelasPage);
+  }, [activeTab, kurikulumAktif, mahasiswaPage, kelasPage]);
 
-  const getPaginatedData = (list) => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return list.slice(startIndex, startIndex + itemsPerPage);
+  const fetchMahasiswa = async (page) => {
+    if (!kurikulumAktif) return;
+    setLoadingMahasiswa(true);
+    try {
+      const res = await apiService.get(
+        `/mahasiswa/by-kurikulum?kurikulum_id=${kurikulumAktif.kurikulum_id}&page=${page}&limit=${itemsPerPage}`
+      );
+      setMahasiswaList(res.mahasiswa || []);
+      setMahasiswaTotalPages(res.totalPages || 1);
+    } catch (err) {
+      console.error("Gagal fetch mahasiswa:", err);
+    } finally {
+      setLoadingMahasiswa(false);
+    }
   };
 
-  const totalPages = (list) => Math.ceil(list.length / itemsPerPage);
-
-  const renderPagination = (list) => {
-    const total = totalPages(list);
-    if (total <= 1) return null;
-
-    return (
-      <div className="flex justify-center mt-4 gap-4 text-sm text-black">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className="underline disabled:opacity-50"
-        >
-          Previous
-        </button>
-
-        {Array.from({ length: total }).map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentPage(index + 1)}
-            className={`underline ${
-              currentPage === index + 1 ? "font-bold" : ""
-            }`}
-          >
-            {index + 1}
-          </button>
-        ))}
-
-        <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, total))}
-          disabled={currentPage === total}
-          className="underline disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
-    );
+  const fetchKelas = async (page) => {
+    if (!kurikulumAktif) return;
+    setLoadingKelas(true);
+    try {
+      const res = await apiService.get(
+        `/kelasMahasiswa/by-kurikulum?kurikulum_id=${kurikulumAktif.kurikulum_id}&page=${page}&limit=${itemsPerPage}`
+      );
+      setKelasList(res.kelas || []);
+      setKelasTotalPages(res.totalPages || 1);
+    } catch (err) {
+      console.error("Gagal fetch kelas:", err);
+    } finally {
+      setLoadingKelas(false);
+    }
   };
 
   const openModal = () => setIsModalOpen(true);
@@ -129,79 +107,103 @@ const DataMahasiswaKelas = ({ role }) => {
       </div>
 
       {activeTab === "mahasiswa" && (
-        <div>
+        <>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Daftar Mahasiswa</h2>
             {role === "DosenKoor" && <ButtonAdd onClick={openModal} />}
           </div>
-          <table className="w-full table-auto border border-gray-300">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border px-4 py-2">No</th>
-                <th className="border px-4 py-2">Nama</th>
-                <th className="border px-4 py-2">NIM</th>
-                <th className="border px-4 py-2">Kelas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {getPaginatedData(mahasiswaList).map((mhs, index) => (
-                <tr key={mhs.mahasiswa_id}>
-                  <td className="border px-4 py-2 text-center">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
-                  </td>
-                  <td className="border px-4 py-2">{mhs.nama_mahasiswa}</td>
-                  <td className="border px-4 py-2">{mhs.nim_mahasiswa}</td>
-                  <td className="border px-4 py-2">
-                    {mhs.tb_kelas?.kode_kelas || "-"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {renderPagination(mahasiswaList)}
-        </div>
+
+          {loadingMahasiswa ? (
+            <p>Loading...</p>
+          ) : (
+            <>
+              <table className="w-full table-auto border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border px-4 py-2">No</th>
+                    <th className="border px-4 py-2">Nama</th>
+                    <th className="border px-4 py-2">NIM</th>
+                    <th className="border px-4 py-2">Kelas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mahasiswaList.map((mhs, index) => (
+                    <tr key={mhs.mahasiswa_id}>
+                      <td className="border px-4 py-2 text-center">
+                        {(mahasiswaPage - 1) * itemsPerPage + index + 1}
+                      </td>
+                      <td className="border px-4 py-2">{mhs.nama_mahasiswa}</td>
+                      <td className="border px-4 py-2">{mhs.nim_mahasiswa}</td>
+                      <td className="border px-4 py-2">
+                        {mhs.tb_kelas?.kode_kelas || "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <Pagination
+                currentPage={mahasiswaPage}
+                totalPages={mahasiswaTotalPages}
+                onPageChange={setMahasiswaPage}
+              />
+            </>
+          )}
+        </>
       )}
 
       {activeTab === "kelas" && (
-        <div>
+        <>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Daftar Kelas</h2>
             {role === "DosenKoor" && <ButtonAdd onClick={openModal} />}
           </div>
-          <table className="w-full table-auto border border-gray-300">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border px-4 py-2">No</th>
-                <th className="border px-4 py-2">Kode Kelas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {getPaginatedData(kelasList).map((kelas, index) => (
-                <tr key={kelas.kode_kelas}>
-                  <td className="border px-4 py-2 text-center">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
-                  </td>
-                  <td className="border px-4 py-2">{kelas.kode_kelas}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {renderPagination(kelasList)}
-        </div>
+
+          {loadingKelas ? (
+            <p>Loading...</p>
+          ) : (
+            <>
+              <table className="w-full table-auto border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border px-4 py-2">No</th>
+                    <th className="border px-4 py-2">Kode Kelas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {kelasList.map((kelas, index) => (
+                    <tr key={kelas.kode_kelas}>
+                      <td className="border px-4 py-2 text-center">
+                        {(kelasPage - 1) * itemsPerPage + index + 1}
+                      </td>
+                      <td className="border px-4 py-2">{kelas.kode_kelas}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <Pagination
+                currentPage={kelasPage}
+                totalPages={kelasTotalPages}
+                onPageChange={setKelasPage}
+              />
+            </>
+          )}
+        </>
       )}
 
       <Modal isOpen={isModalOpen} onClose={closeModal}>
         {activeTab === "mahasiswa" ? (
           <FormInputMahasiswa
             onSuccess={() => {
-              fetchMahasiswa();
+              fetchMahasiswa(mahasiswaPage);
               closeModal();
             }}
           />
         ) : (
           <FormInputKelasMahasiswa
             onSuccess={() => {
-              fetchKelas();
+              fetchKelas(kelasPage);
               closeModal();
             }}
           />

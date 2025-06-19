@@ -6,69 +6,37 @@ import ButtonAdd from "../all/ButtonAdd";
 import Modal from "../all/Modal";
 import FormInputDosen from "./FormInputDosen";
 import FormInputKelasDosen from "./FormInputKelasDosen";
+import Pagination from "../all/Pagination";
 
 const DataDosenKelas = ({ role }) => {
   const [activeTab, setActiveTab] = useState("dosen");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dosenList, setDosenList] = useState([]);
   const [kelasDosenList, setKelasDosenList] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const fetchDosen = () =>
-    apiService.get("/dosen/by-kurikulum").then(setDosenList);
-  const fetchKelasDosen = () =>
-    apiService.get("/kelasDosen/by-kurikulum").then(setKelasDosenList);
+  const fetchDosen = async (page) => {
+    const res = await apiService.get(
+      `/dosen/by-kurikulum?page=${page}&limit=${itemsPerPage}`
+    );
+    setDosenList(res.dosen || []);
+    setTotalPages(res.totalPages || 1);
+  };
+
+  const fetchKelasDosen = async (page) => {
+    const res = await apiService.get(
+      `/kelasDosen/by-kurikulum?page=${page}&limit=${itemsPerPage}`
+    );
+    setKelasDosenList(res.kelas || []);
+    setTotalPages(res.totalPages || 1);
+  };
 
   useEffect(() => {
-    if (activeTab === "dosen") fetchDosen();
-    else fetchKelasDosen();
-    setCurrentPage(1);
-  }, [activeTab]);
-
-  const getPaginatedData = (list) => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return list.slice(startIndex, startIndex + itemsPerPage);
-  };
-
-  const totalPages = (list) => Math.ceil(list.length / itemsPerPage);
-
-  const renderPagination = (list) => {
-    const total = totalPages(list);
-    if (total <= 1) return null;
-
-    return (
-      <div className="flex justify-center mt-4 gap-4 text-sm text-black">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className="underline disabled:opacity-50"
-        >
-          Previous
-        </button>
-
-        {Array.from({ length: total }).map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentPage(index + 1)}
-            className={`underline ${
-              currentPage === index + 1 ? "font-bold" : ""
-            }`}
-          >
-            {index + 1}
-          </button>
-        ))}
-
-        <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, total))}
-          disabled={currentPage === total}
-          className="underline disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
-    );
-  };
+    if (activeTab === "dosen") fetchDosen(currentPage);
+    else fetchKelasDosen(currentPage);
+  }, [activeTab, currentPage]);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -82,7 +50,10 @@ const DataDosenKelas = ({ role }) => {
               ? "bg-blue-600 text-white"
               : "bg-white text-blue-600 border-blue-600"
           }`}
-          onClick={() => setActiveTab("dosen")}
+          onClick={() => {
+            setActiveTab("dosen");
+            setCurrentPage(1);
+          }}
         >
           Data Dosen
         </button>
@@ -92,7 +63,10 @@ const DataDosenKelas = ({ role }) => {
               ? "bg-green-600 text-white"
               : "bg-white text-green-600 border-green-600"
           }`}
-          onClick={() => setActiveTab("kelas")}
+          onClick={() => {
+            setActiveTab("kelas");
+            setCurrentPage(1);
+          }}
         >
           Data Kelas Dosen
         </button>
@@ -113,8 +87,8 @@ const DataDosenKelas = ({ role }) => {
               </tr>
             </thead>
             <tbody>
-              {getPaginatedData(dosenList).map((dosen, index) => (
-                <tr key={index}>
+              {dosenList.map((dosen, index) => (
+                <tr key={dosen.dosen_id}>
                   <td className="border px-4 py-2 text-center">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </td>
@@ -124,7 +98,11 @@ const DataDosenKelas = ({ role }) => {
               ))}
             </tbody>
           </table>
-          {renderPagination(dosenList)}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
 
@@ -145,8 +123,8 @@ const DataDosenKelas = ({ role }) => {
               </tr>
             </thead>
             <tbody>
-              {getPaginatedData(kelasDosenList).map((kelas, index) => (
-                <tr key={index}>
+              {kelasDosenList.map((kelas, index) => (
+                <tr key={kelas.kelas_dosen_id || index}>
                   <td className="border px-4 py-2 text-center">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </td>
@@ -162,7 +140,11 @@ const DataDosenKelas = ({ role }) => {
               ))}
             </tbody>
           </table>
-          {renderPagination(kelasDosenList)}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
 
@@ -170,14 +152,14 @@ const DataDosenKelas = ({ role }) => {
         {activeTab === "dosen" ? (
           <FormInputDosen
             onSuccess={() => {
-              fetchDosen();
+              fetchDosen(currentPage);
               closeModal();
             }}
           />
         ) : (
           <FormInputKelasDosen
             onSuccess={() => {
-              fetchKelasDosen();
+              fetchKelasDosen(currentPage);
               closeModal();
             }}
           />
