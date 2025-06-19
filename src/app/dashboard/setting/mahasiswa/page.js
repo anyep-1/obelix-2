@@ -11,6 +11,9 @@ const InputMahasiswaKelas = () => {
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
+  const [loadingMahasiswa, setLoadingMahasiswa] = useState(false);
+  const [loadingKelasMahasiswa, setLoadingKelasMahasiswa] = useState(false);
+
   const mahasiswaInputRef = useRef(null);
   const kelasInputRef = useRef(null);
 
@@ -22,7 +25,8 @@ const InputMahasiswaKelas = () => {
     endpoint,
     successMessage,
     clearFn,
-    fileRef
+    fileRef,
+    setLoading
   ) => {
     if (!data.length) {
       setErrorMsg("File kosong atau belum diunggah.");
@@ -30,6 +34,7 @@ const InputMahasiswaKelas = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const res = await apiService.post(endpoint, data);
       if (res.success || res.status === 201) {
@@ -45,6 +50,8 @@ const InputMahasiswaKelas = () => {
       console.error(err);
       setErrorMsg("Terjadi kesalahan saat mengirim data.");
       setSuccessMsg("");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,12 +84,18 @@ const InputMahasiswaKelas = () => {
               "/input/kelasMahasiswa",
               "Data kelas mahasiswa berhasil disimpan.",
               setKelasMahasiswaData,
-              kelasInputRef
+              kelasInputRef,
+              setLoadingKelasMahasiswa
             )
           }
-          className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded"
+          disabled={loadingKelasMahasiswa}
+          className={`mt-4 w-full py-2 rounded text-white ${
+            loadingKelasMahasiswa
+              ? "bg-green-400 cursor-not-allowed"
+              : "bg-green-600 hover:bg-green-700"
+          }`}
         >
-          Submit Kelas Mahasiswa
+          {loadingKelasMahasiswa ? "Menyimpan..." : "Submit Kelas Mahasiswa"}
         </button>
       </div>
 
@@ -109,12 +122,18 @@ const InputMahasiswaKelas = () => {
               "/input/mahasiswa",
               "Data mahasiswa berhasil disimpan.",
               setMahasiswaData,
-              mahasiswaInputRef
+              mahasiswaInputRef,
+              setLoadingMahasiswa
             )
           }
-          className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+          disabled={loadingMahasiswa}
+          className={`mt-4 w-full py-2 rounded text-white ${
+            loadingMahasiswa
+              ? "bg-blue-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
-          Submit Mahasiswa
+          {loadingMahasiswa ? "Menyimpan..." : "Submit Mahasiswa"}
         </button>
       </div>
 

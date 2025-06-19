@@ -11,6 +11,9 @@ const InputDosenKelas = () => {
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
+  const [loadingDosen, setLoadingDosen] = useState(false);
+  const [loadingKelas, setLoadingKelas] = useState(false);
+
   const dosenInputRef = useRef(null);
   const kelasInputRef = useRef(null);
 
@@ -27,7 +30,8 @@ const InputDosenKelas = () => {
     endpoint,
     successMessage,
     clearFn,
-    fileRef
+    fileRef,
+    setLoading
   ) => {
     if (!data.length) {
       setErrorMsg("File kosong atau belum diunggah.");
@@ -35,6 +39,7 @@ const InputDosenKelas = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const res = await apiService.post(endpoint, data);
       if (res.success || res.status === 201) {
@@ -50,6 +55,8 @@ const InputDosenKelas = () => {
       console.error(err);
       setErrorMsg("Terjadi kesalahan saat mengirim data.");
       setSuccessMsg("");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,12 +86,18 @@ const InputDosenKelas = () => {
               "/input/dosen",
               "Data dosen berhasil disimpan.",
               setDosenData,
-              dosenInputRef
+              dosenInputRef,
+              setLoadingDosen
             )
           }
-          className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+          disabled={loadingDosen}
+          className={`mt-4 w-full py-2 rounded text-white ${
+            loadingDosen
+              ? "bg-blue-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
-          Submit Dosen
+          {loadingDosen ? "Menyimpan..." : "Submit Dosen"}
         </button>
       </div>
 
@@ -110,12 +123,18 @@ const InputDosenKelas = () => {
               "/input/kelasDosen",
               "Data kelas dosen berhasil disimpan.",
               setKelasData,
-              kelasInputRef
+              kelasInputRef,
+              setLoadingKelas
             )
           }
-          className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded"
+          disabled={loadingKelas}
+          className={`mt-4 w-full py-2 rounded text-white ${
+            loadingKelas
+              ? "bg-green-400 cursor-not-allowed"
+              : "bg-green-600 hover:bg-green-700"
+          }`}
         >
-          Submit Kelas Dosen
+          {loadingKelas ? "Menyimpan..." : "Submit Kelas Dosen"}
         </button>
       </div>
 

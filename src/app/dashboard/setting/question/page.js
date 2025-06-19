@@ -10,6 +10,7 @@ const InputQuestion = () => {
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [skippedItems, setSkippedItems] = useState([]);
+  const [loading, setLoading] = useState(false); // ✅ loading state
 
   const fileInputRef = useRef(null);
   const expectedHeaders = ["nama_question", "clo", "tools", "nama_matkul"];
@@ -22,6 +23,7 @@ const InputQuestion = () => {
       return;
     }
 
+    setLoading(true); // ✅ mulai loading
     try {
       const res = await apiService.post("/input/question", questionData);
 
@@ -48,6 +50,8 @@ const InputQuestion = () => {
       setErrorMsg("Terjadi kesalahan saat mengirim data.");
       setSuccessMsg("");
       setSkippedItems([]);
+    } finally {
+      setLoading(false); // ✅ selesai loading
     }
   };
 
@@ -74,9 +78,14 @@ const InputQuestion = () => {
         />
         <button
           onClick={handleSubmit}
-          className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded"
+          disabled={loading}
+          className={`mt-4 w-full py-2 rounded text-white ${
+            loading
+              ? "bg-purple-400 cursor-not-allowed"
+              : "bg-purple-600 hover:bg-purple-700"
+          }`}
         >
-          Submit Pertanyaan
+          {loading ? "Menyimpan..." : "Submit Pertanyaan"}
         </button>
       </div>
 

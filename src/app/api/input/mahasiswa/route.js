@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
@@ -29,7 +30,7 @@ export async function POST(req) {
       kelasMap[k.kode_kelas] = k.kelas_id;
     });
 
-    // Validasi dan siapkan data mahasiswa
+    // Siapkan data mahasiswa (validasi sekaligus transformasi)
     const mahasiswaData = [];
     for (const item of data) {
       const kelasId = kelasMap[item.kode_kelas];
@@ -50,13 +51,14 @@ export async function POST(req) {
       });
     }
 
-    // Simpan data secara batch
-    const created = await prisma.$transaction(
-      mahasiswaData.map((mhs) => prisma.tb_mahasiswa.create({ data: mhs }))
-    );
+    // Insert sekaligus banyak data (lebih cepat & efisien)
+    const created = await prisma.tb_mahasiswa.createMany({
+      data: mahasiswaData,
+      skipDuplicates: true, // jika ada constraint unik, data duplikat akan di-skip
+    });
 
     return NextResponse.json(
-      { success: true, inserted: created.length },
+      { success: true, inserted: created.count },
       { status: 201 }
     );
   } catch (err) {

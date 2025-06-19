@@ -9,6 +9,8 @@ const InputTools = () => {
   const [toolsData, setToolsData] = useState([]);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false); // ✅ loading state
+
   const fileInputRef = useRef(null);
 
   const expectedHeaders = ["nama_tools"];
@@ -20,6 +22,7 @@ const InputTools = () => {
       return;
     }
 
+    setLoading(true); // ✅ mulai loading
     try {
       const res = await apiService.post("/input/toolsAssesment", toolsData);
       if (res.success || res.status === 201) {
@@ -35,6 +38,8 @@ const InputTools = () => {
       console.error(err);
       setErrorMsg("Terjadi kesalahan saat mengirim data.");
       setSuccessMsg("");
+    } finally {
+      setLoading(false); // ✅ selesai loading
     }
   };
 
@@ -59,9 +64,14 @@ const InputTools = () => {
         />
         <button
           onClick={handleSubmit}
-          className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+          disabled={loading}
+          className={`mt-4 w-full py-2 rounded text-white ${
+            loading
+              ? "bg-blue-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
-          Submit Tools
+          {loading ? "Menyimpan..." : "Submit Tools"}
         </button>
       </div>
 
