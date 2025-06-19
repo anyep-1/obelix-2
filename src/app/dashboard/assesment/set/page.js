@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import apiService from "@/app/services/apiServices";
+import LoadingSpinner from "@/components/all/LoadingSpinner";
 
 const SetAssessmentPlan = () => {
   const [data, setData] = useState([]);
@@ -15,16 +16,29 @@ const SetAssessmentPlan = () => {
         const kurikulum = await apiService.get("/kurikulum/active");
         setKurikulumAktif(kurikulum);
 
+        // Ambil struktur CLO Assesment Map
         const res = await apiService.get(
           `/clo/assesment-map?id=${kurikulum.kurikulum_id}`
         );
         setData(res);
 
+        // Ambil data selected dari backend
         const selectedData = await apiService.get("/selected-matkul");
+
+        // Mapping manual dari PLO → semua PI → semua matkul
         const selectedMap = {};
         selectedData.forEach((item) => {
-          selectedMap[item.matkul_id] = true;
+          const matchedPLO = res.find((plo) => plo.plo_id === item.plo_id);
+          matchedPLO?.pi.forEach((pi) => {
+            pi.matkul.forEach((mk) => {
+              if (mk.matkul_id === item.matkul_id) {
+                const key = `${mk.matkul_id}_${pi.pi_id}`;
+                selectedMap[key] = true;
+              }
+            });
+          });
         });
+
         setSelected(selectedMap);
       } catch (error) {
         console.error("Gagal fetch data:", error);
@@ -36,13 +50,14 @@ const SetAssessmentPlan = () => {
     fetchData();
   }, []);
 
-  const handleCheckboxChange = async (matkul_id, plo_id, isChecked) => {
-    setSelected((prev) => ({ ...prev, [matkul_id]: isChecked }));
+  const handleCheckboxChange = async (matkul_id, pi_id, plo_id, isChecked) => {
+    const key = `${matkul_id}_${pi_id}`;
+    setSelected((prev) => ({ ...prev, [key]: isChecked }));
 
     try {
       await apiService.post("/selected-matkul", {
         matkul_id,
-        plo_id,
+        plo_id, // tetap kirim ke backend
         selected: isChecked,
       });
     } catch (error) {
@@ -54,14 +69,19 @@ const SetAssessmentPlan = () => {
     if (!confirm("Yakin ingin menghapus semua pilihan mata kuliah?")) return;
 
     try {
-      await apiService.delete("/selected-matkul/reset");
+      await apiService.delete("/selected-matkul/delete");
       setSelected({});
     } catch (err) {
       console.error("Gagal reset:", err);
     }
   };
 
-  if (loading) return <p className="p-6">Loading...</p>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <LoadingSpinner />
+      </div>
+    );
 
   return (
     <div className="p-6 space-y-6">
@@ -93,25 +113,29 @@ const SetAssessmentPlan = () => {
                 PI {pi.nomor_pi}
               </h3>
               <ul className="ml-6 text-gray-800 space-y-2">
-                {pi.matkul.map((mk) => (
-                  <li
-                    key={`mk-${mk.matkul_id}`}
-                    className="flex items-center gap-2"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={!!selected[mk.matkul_id]}
-                      onChange={(e) =>
-                        handleCheckboxChange(
-                          mk.matkul_id,
-                          plo.plo_id,
-                          e.target.checked
-                        )
-                      }
-                    />
-                    {mk.nama_matkul}
-                  </li>
-                ))}
+                {pi.matkul.map((mk) => {
+                  const key = `${mk.matkul_id}_${pi.pi_id}`;
+                  return (
+                    <li
+                      key={`mk-${mk.matkul_id}-${pi.pi_id}`}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!!selected[key]}
+                        onChange={(e) =>
+                          handleCheckboxChange(
+                            mk.matkul_id,
+                            pi.pi_id,
+                            plo.plo_id,
+                            e.target.checked
+                          )
+                        }
+                      />
+                      {mk.nama_matkul}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

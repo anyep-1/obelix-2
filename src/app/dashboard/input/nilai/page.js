@@ -11,6 +11,7 @@ const InputNilaiMahasiswa = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [skippedItems, setSkippedItems] = useState([]);
+  const [loading, setLoading] = useState(false); // ✅ Tambah loading state
   const fileInputRef = useRef(null);
 
   const expectedHeaders = [
@@ -31,10 +32,9 @@ const InputNilaiMahasiswa = () => {
       return;
     }
 
+    setLoading(true); // ✅ Mulai loading
     try {
       const res = await apiService.post("/input/nilai", nilaiData);
-
-      // Destructure response
       const { inserted, skipped, skippedItems, error } = res;
 
       if (error) {
@@ -60,6 +60,8 @@ const InputNilaiMahasiswa = () => {
       setError("Terjadi kesalahan saat mengirim data.");
       setSuccess("");
       setSkippedItems([]);
+    } finally {
+      setLoading(false); // ✅ Selesai loading
     }
   };
 
@@ -90,9 +92,14 @@ const InputNilaiMahasiswa = () => {
 
         <button
           onClick={handleSubmit}
-          className="mt-4 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition"
+          disabled={loading}
+          className={`mt-4 w-full py-2 rounded transition ${
+            loading
+              ? "bg-indigo-300 cursor-not-allowed"
+              : "bg-indigo-600 hover:bg-indigo-700 text-white"
+          }`}
         >
-          Submit Nilai
+          {loading ? "Menyimpan..." : "Submit Nilai"}
         </button>
       </div>
 

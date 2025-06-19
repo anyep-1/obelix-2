@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import apiService from "@/app/services/apiServices";
 import TableAssessment from "@/components/Plan/TableAssessment";
+import Alert from "@/components/all/Alert";
+import LoadingSpinner from "@/components/all/LoadingSpinner";
 
 const AssessmentResultPage = () => {
   const [data, setData] = useState([]);
@@ -18,7 +20,14 @@ const AssessmentResultPage = () => {
         const res = await apiService.get(
           `/selected-matkul/hasil?id=${kurikulum.kurikulum_id}`
         );
-        setData(res.data);
+
+        const sortedData = res.data.sort((a, b) => {
+          const angkaA = parseInt(a.tingkat?.match(/\d+/)?.[0] || "0");
+          const angkaB = parseInt(b.tingkat?.match(/\d+/)?.[0] || "0");
+          return angkaA - angkaB;
+        });
+
+        setData(sortedData);
       } catch (err) {
         console.error("Gagal ambil data hasil:", err);
       } finally {
@@ -32,7 +41,7 @@ const AssessmentResultPage = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <h1>Loading...</h1>
+        <LoadingSpinner />
       </div>
     );
   }
@@ -44,7 +53,15 @@ const AssessmentResultPage = () => {
         Kurikulum Aktif:{" "}
         <strong>{kurikulumAktif?.tahun_kurikulum || "Tidak ditemukan"}</strong>
       </p>
-      <TableAssessment ploData={data} />
+
+      {data.length === 0 ? (
+        <Alert.InfoAlert
+          title="Belum Ada Data"
+          message="Belum ada mata kuliah yang dipilih untuk assessment plan."
+        />
+      ) : (
+        <TableAssessment ploData={data} />
+      )}
     </div>
   );
 };

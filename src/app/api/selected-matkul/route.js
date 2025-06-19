@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   const body = await req.json();
-  const { matkul_id, plo_id, selected } = body;
+  const { matkul_id, plo_id, selected } = body; // abaikan pi_id di backend
 
   try {
     const existing = await prisma.tb_selected_matkul.findFirst({

@@ -15,34 +15,51 @@ const TableAssessment = ({ ploData }) => {
     }, {});
   };
 
+  // ✅ Urutkan tingkat berdasarkan angka
   const allTingkat = [
     ...new Set(
       ploData.flatMap((plo) => plo.matkul.map((m) => m.tingkat).filter(Boolean))
     ),
-  ];
+  ].sort((a, b) => {
+    const numA = parseInt(a.match(/\d+/)?.[0] || "0");
+    const numB = parseInt(b.match(/\d+/)?.[0] || "0");
+    return numA - numB;
+  });
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full table-auto border border-gray-300 text-sm">
         <thead>
           <tr className="bg-gray-100">
-            <th rowSpan={2} className="border px-4 py-2 text-left">
+            <th
+              rowSpan={2}
+              className="border px-4 py-2 text-left whitespace-normal break-words min-w-[80px]"
+            >
               No PLO
             </th>
-            <th rowSpan={2} className="border px-4 py-2 text-left">
+            <th
+              rowSpan={2}
+              className="border px-4 py-2 text-left whitespace-normal break-words min-w-[200px]"
+            >
               Deskripsi PLO
             </th>
-            <th rowSpan={2} className="border px-4 py-2 text-left">
+            <th
+              rowSpan={2}
+              className="border px-4 py-2 text-left whitespace-normal break-words min-w-[80px]"
+            >
               No PI
             </th>
-            <th rowSpan={2} className="border px-4 py-2 text-left">
+            <th
+              rowSpan={2}
+              className="border px-4 py-2 text-left whitespace-normal break-words min-w-[200px]"
+            >
               Deskripsi PI
             </th>
             {allTingkat.map((tingkat) => (
               <th
                 key={tingkat}
                 colSpan={2}
-                className="border px-4 py-2 text-center"
+                className="border px-4 py-2 text-center whitespace-normal break-words min-w-[160px]"
               >
                 {tingkat}
               </th>
@@ -118,7 +135,7 @@ const TableAssessment = ({ ploData }) => {
                       </td>
                       <td
                         rowSpan={piList.length}
-                        className="border px-4 py-2 bg-gray-50"
+                        className="border px-4 py-2 bg-gray-50 whitespace-normal break-words"
                       >
                         {plo.nama_plo}
                       </td>
@@ -127,7 +144,9 @@ const TableAssessment = ({ ploData }) => {
                   <td className="border px-4 py-2 text-center">
                     {piGroup.pi.nomor}
                   </td>
-                  <td className="border px-4 py-2">{piGroup.pi.deskripsi}</td>
+                  <td className="border px-4 py-2 whitespace-normal break-words">
+                    {piGroup.pi.deskripsi}
+                  </td>
                   {allTingkat.flatMap((tingkat) => {
                     const ganjilMatkul = groupedMatkul[tingkat]?.ganjil || [];
                     const genapMatkul = groupedMatkul[tingkat]?.genap || [];
@@ -142,19 +161,24 @@ const TableAssessment = ({ ploData }) => {
                           )
                         )
                         .map((matkul) => (
-                          <div key={matkul.id}>{matkul.nama}</div>
+                          <div
+                            key={matkul.id}
+                            className="whitespace-normal break-words"
+                          >
+                            {matkul.nama}
+                          </div>
                         ));
 
                     return [
                       <td
                         key={`${tingkat}-ganjil-${piGroup.pi.id}`}
-                        className="border px-2 py-2"
+                        className="border px-2 py-2 align-top whitespace-normal break-words"
                       >
                         {renderMatkul(ganjilMatkul)}
                       </td>,
                       <td
                         key={`${tingkat}-genap-${piGroup.pi.id}`}
-                        className="border px-2 py-2"
+                        className="border px-2 py-2 align-top whitespace-normal break-words"
                       >
                         {renderMatkul(genapMatkul)}
                       </td>,
