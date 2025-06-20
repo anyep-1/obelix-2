@@ -15,13 +15,19 @@ export const POST = async (req) => {
       );
     }
 
-    // Ambil template + CLO (snake_case)
+    // Ambil template + CLO (include PI dan CLO)
     const template = await prisma.tb_template_rubrik.findUnique({
       where: { template_id: Number(template_id) },
-      include: { tb_pi: { include: { tb_clo: true } } },
+      include: {
+        tb_pi: {
+          include: {
+            tb_clo: true,
+          },
+        },
+      },
     });
 
-    if (!template?.tb_pi?.tb_clo.length) {
+    if (!template?.tb_pi?.tb_clo?.length) {
       return new Response(
         JSON.stringify({ message: "Template atau CLO tidak ditemukan" }),
         {
@@ -31,9 +37,26 @@ export const POST = async (req) => {
       );
     }
 
-    // Ambil nilai mahasiswa
-    const cloList = template.tb_pi.tb_clo;
+    // ✅ Filter CLO agar hanya dari matkul yang sesuai
+    const cloList = template.tb_pi.tb_clo.filter(
+      (clo) => clo.matkul_id === template.matkul_id
+    );
+
+    if (!cloList.length) {
+      return new Response(
+        JSON.stringify({
+          message: "Tidak ada CLO yang cocok dengan matkul ini",
+        }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const cloIds = cloList.map((c) => c.clo_id);
+
+    // Ambil nilai mahasiswa yang sesuai CLO
     const nilaiMahasiswa = await prisma.tb_nilai.findMany({
       where: { clo_id: { in: cloIds } },
     });
@@ -48,44 +71,35 @@ export const POST = async (req) => {
       );
     }
 
-    // Parse rubrik_kategori dan normalisasi
+    // Debug jika perlu:
+    // console.log("CLOs:", cloIds);
+    // console.log("Nilai:", nilaiMahasiswa);
+
+    // Parse rubrik_kategori
     const parsed =
       typeof template.rubrik_kategori === "string"
         ? JSON.parse(template.rubrik_kategori)
         : template.rubrik_kategori;
+
     const rubrik = {};
     for (const [k, v] of Object.entries(parsed)) {
       rubrik[k.toUpperCase()] = v;
     }
+
     const skorKategori = {
-      EXEMPLARY: {
-        skor: rubrik.EXEMPLARY.nilai,
-        min: rubrik.EXEMPLARY.min,
-        max: rubrik.EXEMPLARY.max,
-      },
-      SATISFACTORY: {
-        skor: rubrik.SATISFACTORY.nilai,
-        min: rubrik.SATISFACTORY.min,
-        max: rubrik.SATISFACTORY.max,
-      },
-      DEVELOPING: {
-        skor: rubrik.DEVELOPING.nilai,
-        min: rubrik.DEVELOPING.min,
-        max: rubrik.DEVELOPING.max,
-      },
-      UNSATISFACTORY: {
-        skor: rubrik.UNSATISFACTORY.nilai,
-        min: rubrik.UNSATISFACTORY.min,
-        max: rubrik.UNSATISFACTORY.max,
-      },
+      EXEMPLARY: rubrik.EXEMPLARY,
+      SATISFACTORY: rubrik.SATISFACTORY,
+      DEVELOPING: rubrik.DEVELOPING,
+      UNSATISFACTORY: rubrik.UNSATISFACTORY,
     };
 
-    // Hitung & simpan per CLO
+    // Hitung skor per CLO
     const results = [];
     for (const clo of cloList) {
       const subset = nilaiMahasiswa.filter((n) => n.clo_id === clo.clo_id);
-      let totalSkor = 0,
-        total = subset.length;
+      const total = subset.length;
+
+      let totalSkor = 0;
       let exc = 0,
         sat = 0,
         dev = 0,
@@ -97,28 +111,31 @@ export const POST = async (req) => {
           v >= skorKategori.EXEMPLARY.min &&
           v <= skorKategori.EXEMPLARY.max
         ) {
-          totalSkor += skorKategori.EXEMPLARY.skor;
+          totalSkor += skorKategori.EXEMPLARY.nilai;
           exc++;
         } else if (
           v >= skorKategori.SATISFACTORY.min &&
           v <= skorKategori.SATISFACTORY.max
         ) {
-          totalSkor += skorKategori.SATISFACTORY.skor;
+          totalSkor += skorKategori.SATISFACTORY.nilai;
           sat++;
         } else if (
           v >= skorKategori.DEVELOPING.min &&
           v <= skorKategori.DEVELOPING.max
         ) {
-          totalSkor += skorKategori.DEVELOPING.skor;
+          totalSkor += skorKategori.DEVELOPING.nilai;
           dev++;
         } else {
-          totalSkor += skorKategori.UNSATISFACTORY.skor;
+          totalSkor += skorKategori.UNSATISFACTORY.nilai;
           uns++;
         }
       });
 
       const skorAkhir = total > 0 ? totalSkor / total : 0;
+      const lulus = exc + sat;
+      const persen_kelulusan = total > 0 ? (lulus / total) * 100 : 0;
 
+      // Simpan skor CLO
       const record = await prisma.tb_skor_clo.upsert({
         where: {
           clo_id_template_id: {
@@ -135,9 +152,6 @@ export const POST = async (req) => {
           template_id: Number(template_id),
         },
       });
-
-      const lulus = exc + sat;
-      const persen_kelulusan = total > 0 ? (lulus / total) * 100 : 0;
 
       results.push({
         clo_id: clo.clo_id,

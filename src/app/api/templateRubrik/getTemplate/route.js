@@ -15,7 +15,7 @@ export async function GET(req) {
         tb_pi: {
           include: {
             tb_plo: true,
-            tb_clo: true,
+            tb_clo: true, // biarkan ini tetap, hanya untuk detail
           },
         },
       },
@@ -47,12 +47,18 @@ export async function GET(req) {
     },
   });
 
-  const formatted = templates.map((tpl) => ({
-    template_id: tpl.template_id,
-    matkul: tpl.tb_matkul.nama_matkul,
-    kurikulum: `TA ${tpl.ta_semester}`,
-    clo: tpl.tb_pi?.tb_clo?.map((c) => c.nomor_clo) || [],
-  }));
+  // ✅ Perbaiki agar hanya CLO yang sesuai matkul_id
+  const formatted = templates.map((tpl) => {
+    const cloList =
+      tpl.tb_pi?.tb_clo?.filter((c) => c.matkul_id === tpl.matkul_id) || [];
+
+    return {
+      template_id: tpl.template_id,
+      matkul: tpl.tb_matkul.nama_matkul,
+      kurikulum: `TA ${tpl.ta_semester}`,
+      clo: cloList.map((c) => c.nomor_clo),
+    };
+  });
 
   return NextResponse.json({ templates: formatted });
 }
