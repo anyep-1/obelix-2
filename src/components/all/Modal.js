@@ -1,4 +1,3 @@
-// File: src/app/components/all/Modal.jsx
 "use client";
 
 import { useEffect } from "react";
@@ -15,9 +14,9 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-auto">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-lg mx-auto my-10 p-6 relative max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10">
           <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
           <button
             onClick={onClose}
