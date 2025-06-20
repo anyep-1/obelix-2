@@ -145,10 +145,12 @@ export const POST = async (req) => {
         },
         update: {
           skor: skorAkhir,
+          jumlah_sampel: total, // ← Simpan jumlah sampel
         },
         create: {
           clo_id: clo.clo_id,
           skor: skorAkhir,
+          jumlah_sampel: total, // ← Simpan juga saat create baru
           template_id: Number(template_id),
         },
       });

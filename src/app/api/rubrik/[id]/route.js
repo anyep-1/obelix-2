@@ -7,17 +7,17 @@ export const dynamic = "force-dynamic";
 function cariKategori(skor, rubrikKategori) {
   for (const [namaKategori, info] of Object.entries(rubrikKategori)) {
     if (skor >= info.min && skor <= info.max) {
-      return namaKategori.toUpperCase(); // Semua huruf besar agar konsisten di frontend
+      return namaKategori.toUpperCase(); // Konsisten di frontend
     }
   }
-  return "TIDAK DIKETAHUI"; // Jika tidak ada kategori yang sesuai
+  return "TIDAK DIKETAHUI";
 }
 
 export async function GET(req, context) {
   const { params } = context;
   const templateId = parseInt(params.id, 10);
 
-  // Ambil template rubrik dan relasi terkait
+  // Ambil template rubrik dan relasi
   const template = await prisma.tb_template_rubrik.findUnique({
     where: { template_id: templateId },
     include: {
@@ -40,22 +40,29 @@ export async function GET(req, context) {
     );
   }
 
-  // Parsing rubrik kategori (dari string JSON atau objek)
+  // Parse rubrik kategori
   const rubrikKategori =
     typeof template.rubrik_kategori === "string"
       ? JSON.parse(template.rubrik_kategori)
       : template.rubrik_kategori;
 
-  // Ambil semua clo_id dari tb_pi.tb_clo
-  const cloIds = template.tb_pi.tb_clo.map((c) => c.clo_id);
-
-  // Ambil nilai mahasiswa dari tb_nilai sesuai cloIds
-  const nilaiMahasiswa = await prisma.tb_nilai.findMany({
-    where: { clo_id: { in: cloIds } },
-    select: { nilai_per_question: true },
+  // Ambil dari tb_skor_clo yang sudah di-generate sebelumnya
+  const semuaNilai = template.tb_skor_clo.map((item) => {
+    const kategori = cariKategori(item.skor, rubrikKategori);
+    return {
+      nilai_per_question: item.skor,
+      jumlah_sampel: item.jumlah_sampel || 0,
+      kategori,
+    };
   });
 
-  // Hitung kategori berdasarkan nilai mahasiswa
+  // Hitung total jumlah sampel
+  const jumlahMahasiswa = semuaNilai.reduce(
+    (total, item) => total + (item.jumlah_sampel || 0),
+    0
+  );
+
+  // Hitung kategori berdasarkan hasil yang tersimpan
   const kategoriCount = {
     EXEMPLARY: 0,
     SATISFACTORY: 0,
@@ -64,64 +71,19 @@ export async function GET(req, context) {
     TIDAK_DIKETAHUI: 0,
   };
 
-  nilaiMahasiswa.forEach(({ nilai_per_question }) => {
-    const kategori = cariKategori(nilai_per_question, rubrikKategori);
+  semuaNilai.forEach((item) => {
+    const kategori = item.kategori;
     if (kategoriCount[kategori] !== undefined) {
-      kategoriCount[kategori]++;
+      kategoriCount[kategori] += item.jumlah_sampel || 0;
     } else {
-      kategoriCount.TIDAK_DIKETAHUI++;
+      kategoriCount.TIDAK_DIKETAHUI += item.jumlah_sampel || 0;
     }
   });
 
-  const jumlahMahasiswa = nilaiMahasiswa.length;
-
-  // Buat data semuaNilai dari tb_skor_clo (skor CLO ringkasan)
-  const semuaNilai = template.tb_skor_clo.map((item) => ({
-    nilai_per_question: item.skor,
-    kategori: cariKategori(item.skor, rubrikKategori),
-  }));
-
-  // Kirimkan response lengkap
   return NextResponse.json({
     template,
     semuaNilai,
     kategoriCount,
     jumlahMahasiswa,
   });
-}
-
-export async function DELETE(req, { params }) {
-  const { id } = params;
-
-  if (!id) {
-    return NextResponse.json(
-      { error: "ID rubrik tidak ditemukan" },
-      { status: 400 }
-    );
-  }
-
-  try {
-    const deletedRubrik = await prisma.tb_template_rubrik.delete({
-      where: { template_id: Number(id) },
-    });
-
-    return NextResponse.json({
-      message: "Rubrik berhasil dihapus",
-      data: deletedRubrik,
-    });
-  } catch (error) {
-    console.error("Error menghapus rubrik:", error);
-
-    if (error.code === "P2025") {
-      return NextResponse.json(
-        { error: "Rubrik tidak ditemukan" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Gagal menghapus rubrik" },
-      { status: 500 }
-    );
-  }
 }

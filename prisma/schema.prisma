@@ -11,17 +11,14 @@ model tb_kurikulum {
   kurikulum_id       Int                  @id @default(autoincrement())
   tahun_kurikulum    String
   selected           Boolean              @default(false)
+  tb_dosen           tb_dosen[]
+  tb_kelas           tb_kelas[]
   tb_matkul          tb_matkul[]
+  tb_nilai           tb_nilai[]
   tb_plo             tb_plo[]
   tb_portofolio      tb_portofolio[]
   tb_profillulusan   tb_profillulusan[]
   tb_template_rubrik tb_template_rubrik[]
-
-  tb_kelas tb_kelas[]
-
-  tb_dosen tb_dosen[]
-
-  tb_nilai tb_nilai[]
 }
 
 model tb_profillulusan {
@@ -171,9 +168,8 @@ model tb_nilai {
   matkul_id          Int
   kurikulum_id       Int
   tahun_akademik     String       @db.VarChar(1000)
-
-  tb_kurikulum tb_kurikulum @relation(fields: [kurikulum_id], references: [kurikulum_id])
   tb_clo             tb_clo       @relation(fields: [clo_id], references: [clo_id])
+  tb_kurikulum       tb_kurikulum @relation(fields: [kurikulum_id], references: [kurikulum_id])
   tb_mahasiswa       tb_mahasiswa @relation(fields: [mahasiswa_id], references: [mahasiswa_id])
   tb_matkul          tb_matkul    @relation(fields: [matkul_id], references: [matkul_id])
   tb_question        tb_question  @relation(fields: [question_id], references: [question_id])
@@ -219,13 +215,14 @@ model tb_user {
 }
 
 model tb_skor_clo {
-  id          Int                @id @default(autoincrement())
-  clo_id      Int
-  template_id Int
-  skor        Float
-  createdAt   DateTime           @default(now())
-  tb_clo      tb_clo             @relation(fields: [clo_id], references: [clo_id])
-  template    tb_template_rubrik @relation(fields: [template_id], references: [template_id])
+  id            Int                @id @default(autoincrement())
+  clo_id        Int
+  template_id   Int
+  skor          Float
+  createdAt     DateTime           @default(now())
+  jumlah_sampel Int?               @default(0)
+  tb_clo        tb_clo             @relation(fields: [clo_id], references: [clo_id])
+  template      tb_template_rubrik @relation(fields: [template_id], references: [template_id])
 
   @@unique([clo_id, template_id], name: "clo_id_template_id")
 }
