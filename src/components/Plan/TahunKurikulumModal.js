@@ -16,18 +16,28 @@ export default function TahunKurikulumModal({ onSuccess, onClose }) {
       return;
     }
 
-    setLoading(true); // <-- Mulai loading
+    setLoading(true);
     try {
+      // ✅ Cek apakah tahun sudah ada
+      const cek = await apiService.get(`/kurikulum/check?tahun=${tahun}`);
+      if (cek.exists) {
+        alert("Tahun kurikulum sudah ada.");
+        setLoading(false);
+        return;
+      }
+
+      // Jika belum ada → lanjut simpan
       await apiService.post("/kurikulum/create", {
         tahun_kurikulum: tahun,
         selected: false,
       });
+
       onSuccess();
       onClose();
     } catch (error) {
       console.error("Gagal simpan:", error);
     } finally {
-      setLoading(false); // <-- Hentikan loading
+      setLoading(false);
     }
   };
 

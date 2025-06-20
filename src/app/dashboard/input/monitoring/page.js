@@ -20,6 +20,7 @@ const Monev = () => {
   const [matkulList, setMatkulList] = useState([]);
   const [selectedMatkulId, setSelectedMatkulId] = useState("");
   const [kurikulumId, setKurikulumId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [rtData, setRtData] = useState([
     {
@@ -100,6 +101,7 @@ const Monev = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true); // ⏳ Start loading
 
     const payload = {
       formData,
@@ -137,6 +139,8 @@ const Monev = () => {
     } catch (err) {
       alert("Gagal menyimpan data");
       console.error(err);
+    } finally {
+      setLoading(false); // ✅ End loading
     }
   };
 
@@ -225,6 +229,7 @@ const Monev = () => {
           data={{ ...formData, userTujuanId, matkulId: selectedMatkulId }}
           onChange={handleFormChange}
           onSubmit={handleSubmit}
+          loading={loading}
         />
 
         <div className="mt-6 flex justify-between items-center">

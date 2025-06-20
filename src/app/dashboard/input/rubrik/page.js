@@ -26,6 +26,7 @@ const SetRubrik = () => {
   const [options, setOptions] = useState({ matkul: [], plo: [], dosen: [] });
   const [piByPlo, setPiByPlo] = useState({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,6 +115,8 @@ const SetRubrik = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true); // ⏳ Mulai loading
+
     try {
       const res = await apiService.post(
         "/templateRubrik/saveTemplate",
@@ -121,23 +124,19 @@ const SetRubrik = () => {
       );
       if (!res) throw new Error("Gagal simpan");
 
-      // Reset hanya form data, tapi pertahankan data matkul
+      // Reset
       setFormData((prev) => ({
         ...initialFormData,
-        kurikulum: prev.kurikulum, // pertahankan kurikulum_id aktif
+        kurikulum: prev.kurikulum,
       }));
-
-      setOptions((prev) => ({
-        ...prev,
-        plo: [],
-        dosen: [],
-      }));
-
+      setOptions((prev) => ({ ...prev, plo: [], dosen: [] }));
       setPiByPlo({});
       setShowSuccessModal(true);
     } catch (err) {
       console.error("Gagal submit:", err);
       alert("Terjadi kesalahan saat menyimpan.");
+    } finally {
+      setLoading(false); // ✅ Selesai loading
     }
   };
 
@@ -213,6 +212,7 @@ const SetRubrik = () => {
           data={formData}
           onChange={handleInputChange}
           onSubmit={handleSubmit}
+          loading={loading}
         />
       </div>
 

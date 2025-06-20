@@ -3,7 +3,7 @@ import React from "react";
 import ReusableKategoriInput from "./ReuseableKategoriInput";
 import ReusableRtItem from "./ReuseableRtItem";
 
-const ReusableForm = ({ fields, data, onChange, onSubmit }) => {
+const ReusableForm = ({ fields, data, onChange, onSubmit, loading }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       {fields.map((field) => {
@@ -164,9 +164,14 @@ const ReusableForm = ({ fields, data, onChange, onSubmit }) => {
 
       <button
         type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        disabled={loading}
+        className={`px-4 py-2 rounded text-white transition ${
+          loading
+            ? "bg-blue-300 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700"
+        }`}
       >
-        Simpan
+        {loading ? "Menyimpan..." : "Simpan"}
       </button>
     </form>
   );

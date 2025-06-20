@@ -10,6 +10,7 @@ const InputPortofolio = () => {
   const [kelasList, setKelasList] = useState([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [kurikulumAktif, setKurikulumAktif] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     tahun_akademik: "",
@@ -82,10 +83,13 @@ const InputPortofolio = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!kurikulumAktif?.kurikulum_id) {
       setStatus("Kurikulum aktif tidak ditemukan.");
       return;
     }
+
+    setLoading(true); // Mulai loading
 
     try {
       await apiService.post("/input/portofolio", {
@@ -104,6 +108,8 @@ const InputPortofolio = () => {
     } catch (err) {
       console.error(err);
       setStatus("Gagal menyimpan");
+    } finally {
+      setLoading(false); // Akhiri loading
     }
   };
 
@@ -150,6 +156,7 @@ const InputPortofolio = () => {
           data={form}
           onChange={handleChange}
           onSubmit={handleSubmit}
+          loading={loading}
         />
       </div>
 

@@ -77,13 +77,13 @@ const StatusCard = ({
 
       {/* Icon */}
       <div
-        className={`z-10 w-10 h-10 rounded-full flex items-center justify-center ${iconBgColor}`}
+        className={`z-0 w-10 h-10 rounded-full flex items-center justify-center ${iconBgColor}`}
       >
         {icon && <div className={`${iconColor}`}>{icon}</div>}
       </div>
 
       {/* Text */}
-      <div className="z-10 flex flex-col flex-grow justify-center">
+      <div className="z-0 flex flex-col flex-grow justify-center">
         <span
           className="font-semibold text-lg text-gray-900 truncate"
           title={title}
@@ -104,7 +104,7 @@ const StatusCard = ({
       {canDelete && onDelete && (
         <button
           onClick={handleDeleteClick}
-          className="z-10 text-gray-400 hover:text-red-500 transition"
+          className="z-0 text-gray-400 hover:text-red-500 transition"
           aria-label="Hapus item"
         >
           <Trash2 size={18} />
