@@ -8,21 +8,16 @@ export const POST = async (req) => {
     if (!template_id) {
       return new Response(
         JSON.stringify({ message: "Template ID wajib diisi" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Ambil template + CLO (include PI dan CLO)
+    // Ambil template dan CLO
     const template = await prisma.tb_template_rubrik.findUnique({
       where: { template_id: Number(template_id) },
       include: {
         tb_pi: {
-          include: {
-            tb_clo: true,
-          },
+          include: { tb_clo: true },
         },
       },
     });
@@ -30,14 +25,10 @@ export const POST = async (req) => {
     if (!template?.tb_pi?.tb_clo?.length) {
       return new Response(
         JSON.stringify({ message: "Template atau CLO tidak ditemukan" }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 404, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // ✅ Filter CLO agar hanya dari matkul yang sesuai
     const cloList = template.tb_pi.tb_clo.filter(
       (clo) => clo.matkul_id === template.matkul_id
     );
@@ -47,16 +38,12 @@ export const POST = async (req) => {
         JSON.stringify({
           message: "Tidak ada CLO yang cocok dengan matkul ini",
         }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 404, headers: { "Content-Type": "application/json" } }
       );
     }
 
     const cloIds = cloList.map((c) => c.clo_id);
 
-    // Ambil nilai mahasiswa yang sesuai CLO
     const nilaiMahasiswa = await prisma.tb_nilai.findMany({
       where: { clo_id: { in: cloIds } },
     });
@@ -64,18 +51,10 @@ export const POST = async (req) => {
     if (!nilaiMahasiswa.length) {
       return new Response(
         JSON.stringify({ message: "Tidak ada data nilai mahasiswa" }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 404, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Debug jika perlu:
-    // console.log("CLOs:", cloIds);
-    // console.log("Nilai:", nilaiMahasiswa);
-
-    // Parse rubrik_kategori
     const parsed =
       typeof template.rubrik_kategori === "string"
         ? JSON.parse(template.rubrik_kategori)
@@ -93,8 +72,8 @@ export const POST = async (req) => {
       UNSATISFACTORY: rubrik.UNSATISFACTORY,
     };
 
-    // Hitung skor per CLO
     const results = [];
+
     for (const clo of cloList) {
       const subset = nilaiMahasiswa.filter((n) => n.clo_id === clo.clo_id);
       const total = subset.length;
@@ -132,10 +111,7 @@ export const POST = async (req) => {
       });
 
       const skorAkhir = total > 0 ? totalSkor / total : 0;
-      const lulus = exc + sat;
-      const persen_kelulusan = total > 0 ? (lulus / total) * 100 : 0;
 
-      // Simpan skor CLO
       const record = await prisma.tb_skor_clo.upsert({
         where: {
           clo_id_template_id: {
@@ -145,12 +121,20 @@ export const POST = async (req) => {
         },
         update: {
           skor: skorAkhir,
-          jumlah_sampel: total, // ← Simpan jumlah sampel
+          jumlah_sampel: total,
+          exc,
+          sat,
+          dev,
+          uns,
         },
         create: {
           clo_id: clo.clo_id,
           skor: skorAkhir,
-          jumlah_sampel: total, // ← Simpan juga saat create baru
+          jumlah_sampel: total,
+          exc,
+          sat,
+          dev,
+          uns,
           template_id: Number(template_id),
         },
       });
@@ -160,7 +144,6 @@ export const POST = async (req) => {
         total,
         counts: { exc, sat, dev, uns },
         skor: skorAkhir,
-        persen_kelulusan,
         saved: record,
       });
     }

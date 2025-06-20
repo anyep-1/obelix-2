@@ -221,6 +221,10 @@ model tb_skor_clo {
   skor          Float
   createdAt     DateTime           @default(now())
   jumlah_sampel Int?               @default(0)
+  exc           Int?
+  sat           Int?
+  dev           Int?
+  uns           Int?
   tb_clo        tb_clo             @relation(fields: [clo_id], references: [clo_id])
   template      tb_template_rubrik @relation(fields: [template_id], references: [template_id])
 

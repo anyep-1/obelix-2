@@ -3,21 +3,11 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-// Fungsi untuk mencari kategori berdasarkan skor dan rubrik
-function cariKategori(skor, rubrikKategori) {
-  for (const [namaKategori, info] of Object.entries(rubrikKategori)) {
-    if (skor >= info.min && skor <= info.max) {
-      return namaKategori.toUpperCase(); // Konsisten di frontend
-    }
-  }
-  return "TIDAK DIKETAHUI";
-}
-
 export async function GET(req, context) {
   const { params } = context;
   const templateId = parseInt(params.id, 10);
 
-  // Ambil template rubrik dan relasi
+  // Ambil template dan relasi yang dibutuhkan
   const template = await prisma.tb_template_rubrik.findUnique({
     where: { template_id: templateId },
     include: {
@@ -40,29 +30,13 @@ export async function GET(req, context) {
     );
   }
 
-  // Parse rubrik kategori
-  const rubrikKategori =
-    typeof template.rubrik_kategori === "string"
-      ? JSON.parse(template.rubrik_kategori)
-      : template.rubrik_kategori;
-
-  // Ambil dari tb_skor_clo yang sudah di-generate sebelumnya
-  const semuaNilai = template.tb_skor_clo.map((item) => {
-    const kategori = cariKategori(item.skor, rubrikKategori);
-    return {
-      nilai_per_question: item.skor,
-      jumlah_sampel: item.jumlah_sampel || 0,
-      kategori,
-    };
-  });
-
-  // Hitung total jumlah sampel
-  const jumlahMahasiswa = semuaNilai.reduce(
+  // Total jumlah mahasiswa = total sampel dari semua CLO
+  const jumlahMahasiswa = template.tb_skor_clo.reduce(
     (total, item) => total + (item.jumlah_sampel || 0),
     0
   );
 
-  // Hitung kategori berdasarkan hasil yang tersimpan
+  // Hitung jumlah kategori berdasarkan kolom langsung dari tabel
   const kategoriCount = {
     EXEMPLARY: 0,
     SATISFACTORY: 0,
@@ -71,14 +45,23 @@ export async function GET(req, context) {
     TIDAK_DIKETAHUI: 0,
   };
 
-  semuaNilai.forEach((item) => {
-    const kategori = item.kategori;
-    if (kategoriCount[kategori] !== undefined) {
-      kategoriCount[kategori] += item.jumlah_sampel || 0;
-    } else {
-      kategoriCount.TIDAK_DIKETAHUI += item.jumlah_sampel || 0;
-    }
+  template.tb_skor_clo.forEach((item) => {
+    kategoriCount.EXEMPLARY += item.exc || 0;
+    kategoriCount.SATISFACTORY += item.sat || 0;
+    kategoriCount.DEVELOPING += item.dev || 0;
+    kategoriCount.UNSATISFACTORY += item.uns || 0;
   });
+
+  // Siapkan data untuk frontend jika perlu ditampilkan semua
+  const semuaNilai = template.tb_skor_clo.map((item) => ({
+    clo_id: item.clo_id,
+    skor: item.skor,
+    jumlah_sampel: item.jumlah_sampel || 0,
+    exc: item.exc || 0,
+    sat: item.sat || 0,
+    dev: item.dev || 0,
+    uns: item.uns || 0,
+  }));
 
   return NextResponse.json({
     template,
