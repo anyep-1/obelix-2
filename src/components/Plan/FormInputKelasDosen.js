@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Select from "react-select";
 import apiService from "@/app/services/apiServices";
 
 const FormInputKelasDosen = ({ onSuccess }) => {
   const [tahun, setTahun] = useState("");
   const [kelas, setKelas] = useState("");
-  const [dosenId, setDosenId] = useState("");
-  const [matkulId, setMatkulId] = useState("");
+  const [dosenId, setDosenId] = useState(null); // pakai object react-select
+  const [matkulId, setMatkulId] = useState(null);
   const [dosenList, setDosenList] = useState([]);
   const [matkulList, setMatkulList] = useState([]);
-  const [loading, setLoading] = useState(false); // 👈 loading state
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,8 +23,18 @@ const FormInputKelasDosen = ({ onSuccess }) => {
           `/matkul/by-kurikulum?id=${kurikulum.kurikulum_id}`
         );
 
-        setDosenList(dosenRes.dosen || []);
-        setMatkulList(matkulRes || []);
+        setDosenList(
+          (dosenRes.dosen || []).map((d) => ({
+            value: d.dosen_id,
+            label: d.nama_dosen,
+          }))
+        );
+        setMatkulList(
+          (matkulRes || []).map((m) => ({
+            value: m.matkul_id,
+            label: m.nama_matkul,
+          }))
+        );
       } catch (err) {
         console.error("Gagal mengambil data dosen/matkul:", err);
       }
@@ -35,21 +46,9 @@ const FormInputKelasDosen = ({ onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (loading) return; // cegah submit ganda
+    if (loading) return;
     if (!tahun || !kelas || !dosenId || !matkulId) {
       alert("Semua field wajib diisi!");
-      return;
-    }
-
-    const selectedDosen = dosenList.find(
-      (d) => d.dosen_id === parseInt(dosenId)
-    );
-    const selectedMatkul = matkulList.find(
-      (m) => m.matkul_id === parseInt(matkulId)
-    );
-
-    if (!selectedDosen || !selectedMatkul) {
-      alert("Dosen atau matkul tidak valid.");
       return;
     }
 
@@ -57,8 +56,8 @@ const FormInputKelasDosen = ({ onSuccess }) => {
       {
         tahun_akademik: tahun,
         kelas,
-        nama_dosen: selectedDosen.nama_dosen,
-        nama_matkul: selectedMatkul.nama_matkul,
+        nama_dosen: dosenId.label,
+        nama_matkul: matkulId.label,
       },
     ];
 
@@ -75,7 +74,10 @@ const FormInputKelasDosen = ({ onSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 max-h-[80vh] overflow-y-auto pr-2"
+    >
       <div>
         <label className="block font-semibold">Tahun Akademik</label>
         <input
@@ -97,36 +99,24 @@ const FormInputKelasDosen = ({ onSuccess }) => {
         />
       </div>
       <div>
-        <label className="block font-semibold">Nama Dosen</label>
-        <select
-          className="border rounded w-full px-3 py-2"
+        <label className="block font-semibold mb-1">Nama Dosen</label>
+        <Select
+          options={dosenList}
           value={dosenId}
-          onChange={(e) => setDosenId(e.target.value)}
-          required
-        >
-          <option value="">Pilih Dosen</option>
-          {dosenList.map((d) => (
-            <option key={d.dosen_id} value={d.dosen_id}>
-              {d.nama_dosen}
-            </option>
-          ))}
-        </select>
+          onChange={setDosenId}
+          isSearchable
+          placeholder="Pilih Dosen"
+        />
       </div>
       <div>
-        <label className="block font-semibold">Nama Mata Kuliah</label>
-        <select
-          className="border rounded w-full px-3 py-2"
+        <label className="block font-semibold mb-1">Nama Mata Kuliah</label>
+        <Select
+          options={matkulList}
           value={matkulId}
-          onChange={(e) => setMatkulId(e.target.value)}
-          required
-        >
-          <option value="">Pilih Mata Kuliah</option>
-          {matkulList.map((m) => (
-            <option key={m.matkul_id} value={m.matkul_id}>
-              {m.nama_matkul}
-            </option>
-          ))}
-        </select>
+          onChange={setMatkulId}
+          isSearchable
+          placeholder="Pilih Mata Kuliah"
+        />
       </div>
       <button
         className={`px-4 py-2 rounded text-white ${
