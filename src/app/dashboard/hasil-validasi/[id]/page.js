@@ -251,7 +251,7 @@ const ValidasiDetail = () => {
             </div>
             <div>
               <p className="font-semibold">Gugus Kendali Mutu</p>
-              <p>Nama: {me?.nama || "-"}</p>
+              <p>Nama: {data.userPembuat?.nama || "-"}</p>
               <p className="mt-8">Tanda Tangan:</p>
               <div className="h-16 border-b border-gray-500 w-48 mt-2"></div>
             </div>
