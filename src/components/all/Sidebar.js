@@ -401,34 +401,43 @@ const Sidebar = ({ visible, role }) => {
         </div>
 
         {/* Services */}
-        <div className="mt-2">
-          <button
-            onClick={() => setOpenServices(!openServices)}
-            className="w-full flex justify-between items-center px-2 py-2 hover:bg-gray-100 text-left text-gray-900 font-semibold rounded"
-          >
-            <span className="flex items-center gap-2">
-              <Settings size={18} />
-              Services
-            </span>
-            {openServices ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-          {openServices && (
-            <div className="ml-6 mt-1 space-y-1">
-              <button
-                onClick={() => goTo("/dashboard/services/download-excel")}
-                className={menuButtonClass}
-              >
-                Download Template Excel
-              </button>
-              <button
-                onClick={() => goTo("/dashboard/services/buku-panduan")}
-                className={menuButtonClass}
-              >
-                Download Panduan
-              </button>
-            </div>
-          )}
-        </div>
+        {(role === "Kaprodi" ||
+          role === "DosenKoor" ||
+          role === "DosenAmpu" ||
+          role === "GugusKendaliMutu") && (
+          <div className="mt-2">
+            <button
+              onClick={() => setOpenServices(!openServices)}
+              className="w-full flex justify-between items-center px-2 py-2 hover:bg-gray-100 text-left text-gray-900 font-semibold rounded"
+            >
+              <span className="flex items-center gap-2">
+                <Settings size={18} />
+                Services
+              </span>
+              {openServices ? (
+                <ChevronUp size={16} />
+              ) : (
+                <ChevronDown size={16} />
+              )}
+            </button>
+            {openServices && (
+              <div className="ml-6 mt-1 space-y-1">
+                <button
+                  onClick={() => goTo("/dashboard/services/download-excel")}
+                  className={menuButtonClass}
+                >
+                  Download Template Excel
+                </button>
+                <button
+                  onClick={() => goTo("/dashboard/services/buku-panduan")}
+                  className={menuButtonClass}
+                >
+                  Download Panduan
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </nav>
     </div>
   );

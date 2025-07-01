@@ -99,10 +99,12 @@ export default function PIPage() {
               className="border-b border-gray-200 pb-2 flex justify-between items-start"
             >
               <div>
-                <p>
-                  <span className="font-medium">{pi.nomor_pi}.</span>{" "}
-                  {pi.deskripsi_pi}
-                </p>
+                <div className="flex items-start gap-1">
+                  <span className="min-w-[2rem] font-medium">
+                    {pi.nomor_pi}.
+                  </span>
+                  <span className="flex-1">{pi.deskripsi_pi}</span>
+                </div>
                 <p className="text-gray-600 text-xs mt-1">
                   PLO: {pi.tb_plo?.nomor_plo || "-"}
                 </p>

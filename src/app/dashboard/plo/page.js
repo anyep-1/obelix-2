@@ -109,10 +109,13 @@ export default function PloPage() {
               key={plo.plo_id}
               className="border-b border-gray-200 pb-2 flex justify-between items-start"
             >
-              <span>
-                <span className="font-medium">{plo.nomor_plo}.</span>{" "}
-                {plo.nama_plo}
-              </span>
+              <div className="flex items-start">
+                <span className="min-w-[1.5rem] font-medium">
+                  {plo.nomor_plo}.
+                </span>
+                <span className="flex-1">{plo.nama_plo}</span>
+              </div>
+
               {role === "Kaprodi" && (
                 <div className="flex gap-2 ml-4">
                   <button

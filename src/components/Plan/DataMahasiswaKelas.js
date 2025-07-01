@@ -158,7 +158,9 @@ const DataMahasiswaKelas = ({ role }) => {
         <>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Daftar Kelas</h2>
-            {role === "DosenKoor" && <ButtonAdd onClick={openModal} />}
+            {(role === "DosenKoor" || role === "DosenAmpu") && (
+              <ButtonAdd onClick={openModal} />
+            )}
           </div>
 
           {loadingKelas ? (

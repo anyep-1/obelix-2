@@ -99,7 +99,7 @@ export default function Dashboard() {
         backgroundColor: "#8FBCE6",
       },
       {
-        label: "Nilai Minimum",
+        label: "Target",
         data: ploData.labels.map(() => nilaiMinimum),
         type: "line",
         borderColor: "#E68F8F",
@@ -151,7 +151,7 @@ export default function Dashboard() {
               onClick={() => setModalOpen(true)}
               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
             >
-              Atur Nilai Minimum
+              Atur Nilai Target
             </button>
           )}
         </header>
