@@ -4,16 +4,23 @@ import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
-
 const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET);
 
 async function getUserFromToken() {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const token = cookieStore.get("token")?.value;
   if (!token) throw new Error("Token tidak ditemukan");
 
   const { payload } = await jwtVerify(token, SECRET_KEY);
   return payload;
+}
+
+function chunkArray(array, size) {
+  const result = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
 }
 
 export async function POST(req) {
@@ -122,28 +129,36 @@ export async function POST(req) {
     }
 
     let inserted = 0;
-    for (const nilai of toInsert) {
-      await prisma.tb_nilai.upsert({
-        where: {
-          mahasiswa_id_matkul_id_clo_id_tahun_akademik: {
-            mahasiswa_id: nilai.mahasiswa_id,
-            matkul_id: nilai.matkul_id,
-            clo_id: nilai.clo_id,
-            tahun_akademik: nilai.tahun_akademik,
-          },
-        },
-        update: {
-          nilai_per_question: nilai.nilai_per_question,
-          input_by: nilai.input_by,
-          input_date: new Date(),
-          question_id: nilai.question_id,
-        },
-        create: {
-          ...nilai,
-          input_date: new Date(),
-        },
-      });
-      inserted++;
+    const batchSize = 50;
+    const chunks = chunkArray(toInsert, batchSize);
+
+    for (const chunk of chunks) {
+      const results = await Promise.allSettled(
+        chunk.map((nilai) =>
+          prisma.tb_nilai.upsert({
+            where: {
+              mahasiswa_id_matkul_id_clo_id_tahun_akademik: {
+                mahasiswa_id: nilai.mahasiswa_id,
+                matkul_id: nilai.matkul_id,
+                clo_id: nilai.clo_id,
+                tahun_akademik: nilai.tahun_akademik,
+              },
+            },
+            update: {
+              nilai_per_question: nilai.nilai_per_question,
+              input_by: nilai.input_by,
+              input_date: new Date(),
+              question_id: nilai.question_id,
+            },
+            create: {
+              ...nilai,
+              input_date: new Date(),
+            },
+          })
+        )
+      );
+
+      inserted += results.filter((r) => r.status === "fulfilled").length;
     }
 
     return NextResponse.json(
