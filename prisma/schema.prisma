@@ -173,6 +173,8 @@ model tb_nilai {
   tb_mahasiswa       tb_mahasiswa @relation(fields: [mahasiswa_id], references: [mahasiswa_id])
   tb_matkul          tb_matkul    @relation(fields: [matkul_id], references: [matkul_id])
   tb_question        tb_question  @relation(fields: [question_id], references: [question_id])
+
+  @@unique([mahasiswa_id, matkul_id, clo_id, tahun_akademik], map: "tb_nilai_unique_entry")
 }
 
 model tb_selected_matkul {

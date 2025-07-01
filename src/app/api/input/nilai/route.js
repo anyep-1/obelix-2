@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET);
 
 async function getUserFromToken() {
-  const cookieStore = await cookies(); // ✅ sync
+  const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
   if (!token) throw new Error("Token tidak ditemukan");
 
@@ -29,7 +29,6 @@ export async function POST(req) {
       );
     }
 
-    // Ambil kurikulum aktif
     const kurikulum = await prisma.tb_kurikulum.findFirst({
       where: { selected: true },
     });
@@ -41,7 +40,6 @@ export async function POST(req) {
       );
     }
 
-    // Ambil semua mahasiswa, matkul, clo, dan question sekaligus
     const [allMahasiswa, allMatkul, allCLO, allQuestions] = await Promise.all([
       prisma.tb_mahasiswa.findMany({
         select: { mahasiswa_id: true, nim_mahasiswa: true },
@@ -65,15 +63,12 @@ export async function POST(req) {
     const mhsMap = new Map(
       allMahasiswa.map((m) => [normalize(m.nim_mahasiswa), m.mahasiswa_id])
     );
-
     const matkulMap = new Map(
       allMatkul.map((m) => [normalize(m.kode_matkul), m.matkul_id])
     );
-
     const cloMap = new Map(
       allCLO.map((c) => [`${normalize(c.nomor_clo)}-${c.matkul_id}`, c.clo_id])
     );
-
     const questionMap = new Map(
       allQuestions.map((q) => [
         `${normalize(q.nama_question)}-${q.clo_id}`,
@@ -99,50 +94,17 @@ export async function POST(req) {
       const questionKey = `${question}-${clo_id}`;
       const question_id = questionMap.get(questionKey);
 
-      if (!mahasiswa_id) {
+      if (
+        !mahasiswa_id ||
+        !matkul_id ||
+        !clo_id ||
+        !question_id ||
+        !tahunAkademik ||
+        isNaN(nilai)
+      ) {
         skipped.push({
           item,
-          reason: `Mahasiswa NIM ${item.nim} tidak ditemukan.`,
-        });
-        continue;
-      }
-
-      if (!matkul_id) {
-        skipped.push({
-          item,
-          reason: `Matkul kode ${item.kode_matkul} tidak ditemukan.`,
-        });
-        continue;
-      }
-
-      if (!clo_id) {
-        skipped.push({
-          item,
-          reason: `CLO ${item.clo} untuk matkul ${item.kode_matkul} tidak ditemukan.`,
-        });
-        continue;
-      }
-
-      if (!question_id) {
-        skipped.push({
-          item,
-          reason: `Question "${item.question}" untuk CLO ${item.clo} tidak ditemukan.`,
-        });
-        continue;
-      }
-
-      if (!tahunAkademik || typeof tahunAkademik !== "string") {
-        skipped.push({
-          item,
-          reason: `Tahun akademik tidak ditemukan atau tidak valid.`,
-        });
-        continue;
-      }
-
-      if (nilai === undefined || nilai === null || isNaN(nilai)) {
-        skipped.push({
-          item,
-          reason: `Nilai tidak valid untuk mahasiswa ${item.nim}.`,
+          reason: `Data tidak valid (mahasiswa/matkul/clo/question/tahun akademik/nilai).`,
         });
         continue;
       }
@@ -159,17 +121,35 @@ export async function POST(req) {
       });
     }
 
-    if (toInsert.length > 0) {
-      await prisma.tb_nilai.createMany({
-        data: toInsert,
-        skipDuplicates: true,
+    let inserted = 0;
+    for (const nilai of toInsert) {
+      await prisma.tb_nilai.upsert({
+        where: {
+          mahasiswa_id_matkul_id_clo_id_tahun_akademik: {
+            mahasiswa_id: nilai.mahasiswa_id,
+            matkul_id: nilai.matkul_id,
+            clo_id: nilai.clo_id,
+            tahun_akademik: nilai.tahun_akademik,
+          },
+        },
+        update: {
+          nilai_per_question: nilai.nilai_per_question,
+          input_by: nilai.input_by,
+          input_date: new Date(),
+          question_id: nilai.question_id,
+        },
+        create: {
+          ...nilai,
+          input_date: new Date(),
+        },
       });
+      inserted++;
     }
 
     return NextResponse.json(
       {
         message: "Data nilai berhasil diproses.",
-        inserted: toInsert.length,
+        inserted,
         skipped: skipped.length,
         skippedItems: skipped,
       },
