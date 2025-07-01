@@ -29,15 +29,15 @@ export async function PUT(req) {
   try {
     const { nilai_minimum } = await req.json();
 
-    const existing = await prisma.tb_setting.findFirst();
+    const existing = await prisma.tb_nilai_minimum.findFirst();
 
     if (existing) {
-      await prisma.tb_setting.update({
+      await prisma.tb_nilai_minimum.update({
         where: { id: existing.id },
         data: { nilai_minimum },
       });
     } else {
-      await prisma.tb_setting.create({
+      await prisma.tb_nilai_minimum.create({
         data: { nilai_minimum },
       });
     }
