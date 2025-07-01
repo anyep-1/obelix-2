@@ -31,7 +31,9 @@ const InputPortofolio = () => {
         setKurikulumAktif(aktif);
 
         // ✅ Ambil kelas mahasiswa
-        const kelasRes = await apiService.get("/kelasMahasiswa/by-kurikulum");
+        const kelasRes = await apiService.get(
+          `/kelasMahasiswa/by-kurikulum?kurikulum_id=${aktif.kurikulum_id}`
+        );
         const kelasArray = kelasRes.kelas || [];
 
         console.log("Data kelas dari API:", kelasArray);

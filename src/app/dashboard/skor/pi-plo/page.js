@@ -123,6 +123,11 @@ const SkorPage = () => {
     .toFixed(2);
 
   const handleSave = async () => {
+    if (parseFloat(totalWeight) !== 1.0) {
+      alert("Total bobot harus sama dengan 1.00");
+      return;
+    }
+
     const payload = isPIPage
       ? { pi_id: selectedPiId, skor: parseFloat(score) }
       : { plo_id: selectedPloId, skor: parseFloat(score) };
@@ -277,11 +282,13 @@ const SkorPage = () => {
           disabled={
             !(isPIPage ? selectedPiId : selectedPloId) ||
             parseFloat(score) === 0 ||
+            parseFloat(totalWeight) !== 1.0 ||
             (!isPIPage && !ploReady)
           }
           className={`w-full px-6 py-3 rounded-md text-lg font-semibold transition-colors duration-300 ${
             !(isPIPage ? selectedPiId : selectedPloId) ||
             parseFloat(score) === 0 ||
+            parseFloat(totalWeight) !== 1.0 ||
             (!isPIPage && !ploReady)
               ? "bg-gray-300 text-gray-600 cursor-not-allowed"
               : "bg-teal-600 text-white hover:bg-teal-700"

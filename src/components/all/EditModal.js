@@ -62,6 +62,18 @@ export default function EditModal({
 
   if (!isOpen) return null;
 
+  // Mapping label tampil agar tidak tampil "nama_clo" tapi "Nama CLO"
+  const customLabels = {
+    nomor_clo: "Nomor CLO",
+    nama_clo: "Deskripsi CLO",
+    nomor_plo: "Nomor PLO",
+    nama_plo: "Deskripsi PLO",
+    nomor_pi: "Nomor PI",
+    nama_pi: "Deskripsi PI",
+    tahun_kurikulum: "Tahun Kurikulum",
+    jumlah_sks: "Jumlah SKS",
+  };
+
   return (
     <div className="fixed inset-0 flex justify-center items-center z-50 bg-black/10">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
@@ -71,9 +83,7 @@ export default function EditModal({
             if (key === "tingkat") {
               return (
                 <div key={key}>
-                  <label className="block text-sm mb-1 capitalize">
-                    Tingkat
-                  </label>
+                  <label className="block text-sm mb-1">Tingkat</label>
                   <select
                     name="tingkat"
                     value={value}
@@ -94,9 +104,7 @@ export default function EditModal({
             if (key === "semester") {
               return (
                 <div key={key}>
-                  <label className="block text-sm mb-1 capitalize">
-                    Semester
-                  </label>
+                  <label className="block text-sm mb-1">Semester</label>
                   <select
                     name="semester"
                     value={value}
@@ -114,7 +122,12 @@ export default function EditModal({
 
             return (
               <div key={key}>
-                <label className="block text-sm mb-1 capitalize">{key}</label>
+                <label className="block text-sm mb-1">
+                  {customLabels[key] ||
+                    key
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (l) => l.toUpperCase())}
+                </label>
                 <input
                   name={key}
                   value={value}
