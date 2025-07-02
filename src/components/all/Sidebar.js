@@ -39,9 +39,20 @@ const Sidebar = ({ visible, role }) => {
         visible ? "translate-x-0" : "-translate-x-full"
       } flex flex-col`}
     >
-      <div className="p-4 text-2xl font-bold border-b border-gray-200">
-        My System
+      <div className="border-b border-gray-200 flex flex-col items-center py-2">
+        <img
+          src="/images/obelix-dark.png"
+          alt="Logo Obelix"
+          className="w-36 h-auto block" // gunakan block untuk hilangkan inline gap
+        />
+        <span className="text-center font-semibold text-sm text-gray-700 leading-tight mt-1">
+          Program Studi
+        </span>
+        <span className="text-center font-semibold text-sm text-gray-700 leading-tight mt-1">
+          Teknik Komputer
+        </span>
       </div>
+
       <nav className="flex-1 p-4 overflow-y-auto">
         <button
           onClick={() => goTo("/dashboard/dashboard")}
