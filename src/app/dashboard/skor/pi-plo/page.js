@@ -282,7 +282,7 @@ const SkorPage = () => {
           disabled={
             !(isPIPage ? selectedPiId : selectedPloId) ||
             parseFloat(score) === 0 ||
-            parseFloat(totalWeight) !== 1.0 ||
+            parseFloat(totalWeight) != 1.0 ||
             (!isPIPage && !ploReady)
           }
           className={`w-full px-6 py-3 rounded-md text-lg font-semibold transition-colors duration-300 ${

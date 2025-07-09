@@ -113,9 +113,45 @@ const SetRubrik = () => {
     }));
   };
 
+  // ✅ Validasi kategori tidak tumpang tindih dan min <= max
+  const validateKategoriRanges = (kategori) => {
+    for (let i = 0; i < kategori.length; i++) {
+      const { min: minA, max: maxA, level: levelA } = kategori[i];
+
+      if (minA > maxA) {
+        return `Min tidak boleh lebih besar dari Max pada kategori "${levelA}"`;
+      }
+
+      for (let j = 0; j < kategori.length; j++) {
+        if (i === j) continue;
+
+        const { min: minB, max: maxB, level: levelB } = kategori[j];
+
+        const isOverlap =
+          (minA >= minB && minA <= maxB) ||
+          (maxA >= minB && maxA <= maxB) ||
+          (minA <= minB && maxA >= maxB);
+
+        if (isOverlap) {
+          return `Range nilai kategori "${levelA}" tumpang tindih dengan kategori "${levelB}"`;
+        }
+      }
+    }
+
+    return null; // valid
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // ⏳ Mulai loading
+    setLoading(true);
+
+    // ✅ Jalankan validasi sebelum kirim
+    const kategoriError = validateKategoriRanges(formData.kategori);
+    if (kategoriError) {
+      alert(kategoriError);
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await apiService.post(
@@ -124,7 +160,6 @@ const SetRubrik = () => {
       );
       if (!res) throw new Error("Gagal simpan");
 
-      // Reset
       setFormData((prev) => ({
         ...initialFormData,
         kurikulum: prev.kurikulum,
@@ -136,7 +171,7 @@ const SetRubrik = () => {
       console.error("Gagal submit:", err);
       alert("Terjadi kesalahan saat menyimpan.");
     } finally {
-      setLoading(false); // ✅ Selesai loading
+      setLoading(false);
     }
   };
 

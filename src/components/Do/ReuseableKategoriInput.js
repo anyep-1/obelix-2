@@ -24,6 +24,8 @@ const ReusableKategoriInput = ({ kategori, onChange }) => {
               <input
                 id={`nilai-${index}`}
                 type="number"
+                min={0}
+                max={4}
                 value={item.nilai}
                 onChange={(e) => onChange(index, "nilai", e.target.value)}
                 required
@@ -43,6 +45,8 @@ const ReusableKategoriInput = ({ kategori, onChange }) => {
                 <input
                   id={`min-${index}`}
                   type="number"
+                  min={0}
+                  max={100}
                   value={item.min}
                   onChange={(e) => onChange(index, "min", e.target.value)}
                   required
@@ -52,6 +56,8 @@ const ReusableKategoriInput = ({ kategori, onChange }) => {
                 <input
                   id={`max-${index}`}
                   type="number"
+                  min={0}
+                  max={100}
                   value={item.max}
                   onChange={(e) => onChange(index, "max", e.target.value)}
                   required
