@@ -17,8 +17,8 @@ export default function CLOPage() {
   const [refresh, setRefresh] = useState(0);
   const [role, setRole] = useState("");
   const [editingItem, setEditingItem] = useState(null);
+  const [assignedMatkulIds, setAssignedMatkulIds] = useState([]);
 
-  // Fetch kurikulum aktif dan matkul list
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -37,29 +37,35 @@ export default function CLOPage() {
     fetchData();
   }, []);
 
-  // Reset selectedMatkulId setiap kali matkulList berubah
-  useEffect(() => {
-    if (matkulList.length > 0) {
-      setSelectedMatkulId(matkulList[0].matkul_id);
-    } else {
-      setSelectedMatkulId(null);
-    }
-  }, [matkulList]);
-
-  // Ambil role user
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
         const user = await apiService.get("/me");
-        setRole(user?.user?.role || "");
+        const userRole = user?.user?.role || "";
+        setRole(userRole);
+
+        if (userRole === "DosenKoor") {
+          const assigned = await apiService.get(
+            `/dosenkoor/matkul?user_id=${user.user.user_id}`
+          );
+          const ids = assigned.map((m) => m.matkul_id);
+          setAssignedMatkulIds(ids);
+          setSelectedMatkulId(ids[0] || null);
+        }
       } catch (err) {
         console.error("Gagal mengambil role user:", err);
       }
     };
+
     fetchUserRole();
   }, []);
 
-  // Ambil daftar CLO sesuai selectedMatkulId dan refresh
+  useEffect(() => {
+    if (matkulList.length > 0 && role !== "DosenKoor") {
+      setSelectedMatkulId(matkulList[0].matkul_id);
+    }
+  }, [matkulList, role]);
+
   useEffect(() => {
     const fetchCLO = async () => {
       if (!selectedMatkulId || isNaN(selectedMatkulId)) return;
@@ -139,13 +145,9 @@ export default function CLOPage() {
         </select>
       </div>
 
-      {role === "DosenKoor" && (
+      {role === "DosenKoor" && assignedMatkulIds.includes(selectedMatkulId) && (
         <div className="mb-4">
-          <ButtonAdd
-            onClick={() => {
-              setShowModal(true);
-            }}
-          />
+          <ButtonAdd onClick={() => setShowModal(true)} />
         </div>
       )}
 
@@ -175,24 +177,20 @@ export default function CLOPage() {
                 <div>
                   <strong>CLO {clo.nomor_clo}</strong> - {clo.nama_clo}
                 </div>
-                {role === "DosenKoor" && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setEditingItem(clo)}
-                      title="Edit"
-                      className="text-black hover:text-gray-800"
-                    >
-                      <PencilIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(clo.clo_id)}
-                      title="Hapus"
-                      className="text-black hover:text-gray-800"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                  </div>
-                )}
+                {role === "DosenKoor" &&
+                  assignedMatkulIds.includes(selectedMatkulId) && (
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditingItem(clo)} title="Edit">
+                        <PencilIcon className="h-5 w-5 text-black hover:text-gray-800" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(clo.clo_id)}
+                        title="Hapus"
+                      >
+                        <TrashIcon className="h-5 w-5 text-black hover:text-gray-800" />
+                      </button>
+                    </div>
+                  )}
               </li>
             ))}
           </ul>

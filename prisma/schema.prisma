@@ -59,6 +59,8 @@ model tb_matkul {
   tb_portofolio      tb_portofolio[]
   tb_selected_matkul tb_selected_matkul[]
   tb_template_rubrik tb_template_rubrik[]
+
+  tb_dosen_koor_matkul tb_dosen_koor_matkul[]
 }
 
 model tb_plo_profil {
@@ -214,6 +216,8 @@ model tb_user {
   updated_at  DateTime   @default(now())
   tb_monev    tb_monev[] @relation("UserPembuat")
   monevTujuan tb_monev[] @relation("UserMonev")
+
+  tb_dosen_koor_matkul tb_dosen_koor_matkul[]
 }
 
 model tb_skor_clo {
@@ -306,6 +310,17 @@ model tb_nilai_minimum {
   id            Int      @id @default(autoincrement())
   nilai_minimum Float
   updated_at    DateTime @default(now()) @updatedAt
+}
+
+model tb_dosen_koor_matkul {
+  id        Int       @id @default(autoincrement())
+  user_id   Int
+  matkul_id Int
+
+  tb_user   tb_user   @relation(fields: [user_id], references: [user_id])
+  tb_matkul tb_matkul @relation(fields: [matkul_id], references: [matkul_id])
+
+  @@unique([user_id, matkul_id])
 }
 
 enum Role {

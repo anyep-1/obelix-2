@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import apiService from "@/app/services/apiServices";
 import ButtonAdd from "@/components/all/ButtonAdd";
+import MatkulAssignModal from "@/components/Admin/MatkulAssignModal";
 
 const ROLE_OPTIONS = [
   { value: "Admin", label: "Admin" },
@@ -26,6 +27,10 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [matkulList, setMatkulList] = useState([]);
+  const [assignedMatkul, setAssignedMatkul] = useState([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -49,7 +54,6 @@ export default function AdminDashboard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validasi: hanya boleh satu Kaprodi
     if (!isEdit && form.role === "Kaprodi") {
       const kaprodiExists = users.some((user) => user.role === "Kaprodi");
       if (kaprodiExists) {
@@ -72,7 +76,6 @@ export default function AdminDashboard() {
         setMessage(res.message);
         setUsers([...users, res.user]);
       }
-
       resetForm();
     } catch (error) {
       console.error("Error saving user:", error);
@@ -89,7 +92,6 @@ export default function AdminDashboard() {
 
   const handleDelete = async (user_id) => {
     if (!confirm("Yakin ingin menghapus user ini?")) return;
-
     try {
       await apiService.delete(`/users/delete?user_id=${user_id}`);
       setUsers(users.filter((user) => user.user_id !== user_id));
@@ -110,6 +112,47 @@ export default function AdminDashboard() {
     setIsOpen(false);
     setIsEdit(false);
     setMessage("");
+  };
+
+  const openAssignMatkulModal = async (user) => {
+    setSelectedUser(user);
+    setAssignModalOpen(true);
+
+    try {
+      const kurikulum = await apiService.get("/kurikulum/active");
+
+      const allMatkul = await apiService.get(
+        `/matkul/by-kurikulum?id=${kurikulum.kurikulum_id}`
+      );
+
+      const assigned = await apiService.get(
+        `/dosenkoor/matkul?user_id=${user.user_id}`
+      );
+
+      setMatkulList(allMatkul);
+      setAssignedMatkul(assigned.map((item) => item.matkul_id));
+    } catch (err) {
+      console.error("Gagal mengambil data matkul:", err);
+    }
+  };
+
+  const toggleMatkul = async (matkul_id, checked) => {
+    try {
+      if (checked) {
+        await apiService.post("/dosenkoor/assign", {
+          user_id: selectedUser.user_id,
+          matkul_id,
+        });
+        setAssignedMatkul((prev) => [...prev, matkul_id]);
+      } else {
+        await apiService.delete(
+          `/dosenkoor/unassign?user_id=${selectedUser.user_id}&matkul_id=${matkul_id}`
+        );
+        setAssignedMatkul((prev) => prev.filter((id) => id !== matkul_id));
+      }
+    } catch (err) {
+      console.error("Gagal assign/unassign matkul:", err);
+    }
   };
 
   return (
@@ -139,6 +182,14 @@ export default function AdminDashboard() {
                   <button onClick={() => handleDelete(user.user_id)}>
                     <TrashIcon className="h-5 w-5 text-red-500 hover:text-red-700" />
                   </button>
+                  {user.role === "DosenKoor" && (
+                    <button
+                      onClick={() => openAssignMatkulModal(user)}
+                      className="text-sm text-indigo-600 hover:underline"
+                    >
+                      Assign Matkul
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -234,6 +285,12 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      <MatkulAssignModal
+        user={selectedUser}
+        isOpen={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+      />
     </div>
   );
 }
